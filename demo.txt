@@ -1,0 +1,12 @@
+debug-file: "debug.txt"
+
+servers:
+  freenode:
+    hostname: "chat.freenode.net"
+    port    : 6697
+    nick    : "glguy"
+    tls     : yes
+
+ignores:
+  - "nick1"
+  - "nick2"
