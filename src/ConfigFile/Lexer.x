@@ -1,8 +1,6 @@
 {
-module Lexer
-  ( PosToken(..)
-  , Token(..)
-  , scanTokens
+module ConfigFile.Lexer
+  ( scanTokens
   ) where
 
 import Debug.Trace
@@ -17,6 +15,8 @@ import qualified Data.ByteString.Lazy.Char8 as L8
 import qualified Data.Text                  as Text
 import qualified Data.Text.Encoding         as Text
 import qualified Data.Text.Encoding.Error   as Text
+
+import ConfigFile.Tokens
 
 }
 
@@ -86,26 +86,15 @@ string = String
        . Text.decodeUtf8With Text.lenientDecode
        . L8.toStrict
 
-data PosToken = PosToken Int Int Token -- ^ line column token
-  deriving (Show)
-
-data Token
-  = Atom   Text
-  | String Text
-  | Colon
-  | OpenString
-  | Bullet
-  | Number Integer
-  | EmptyList
-  | EmptyMap
-  deriving (Show)
-
 scanTokens :: ByteString -> Either (Int,Int) [PosToken]
 scanTokens str = go (alexStartPos,'\n',str)
   where go inp@(pos,_,str) =
           case alexScan inp 0 of
-                AlexEOF -> return []
+                AlexEOF -> return [PosToken (alexLine pos) 0 EOF]
                 AlexError ((AlexPn _ line column),_,_) -> Left (line,column)
                 AlexSkip  inp' len     -> go inp'
                 AlexToken inp' len act -> fmap (act pos (L8.take (fromIntegral len) str) :) (go inp')
+
+alexLine :: AlexPosn -> Int
+alexLine (AlexPn _ line _) = line
 }
