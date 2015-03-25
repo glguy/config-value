@@ -5,11 +5,18 @@ module Lexer
   , scanTokens
   ) where
 
+import Debug.Trace
 import Control.Applicative
 import Control.Monad
 import Data.ByteString.Lazy (ByteString)
-import qualified Data.ByteString.Lazy as L
-import Data.Int (Int64)
+import Data.Char            (isDigit, digitToInt)
+import Data.Int             (Int64)
+import Data.Text            (Text)
+import Numeric              (readInt)
+import qualified Data.ByteString.Lazy.Char8 as L8
+import qualified Data.Text                  as Text
+import qualified Data.Text.Encoding         as Text
+import qualified Data.Text.Encoding.Error   as Text
 
 }
 
@@ -36,29 +43,59 @@ $white_no_nl = $white # \n
 config :-
 
 $white+;
+\-\- [^\n]* ;
+
 \{\}                       { tok (const EmptyMap) }
 \[\]                       { tok (const EmptyList) }
-:                          { tok (const Colon) }
-\-                         { tok (const Dash ) }
-$alpha [$alpha $digit \-]* { tok Atom }
-$digit+                    { tok Number }
+\:                         { tok (const Colon) }
+\*                         { tok (const Bullet) }
+$alpha [$alpha $digit \-]* { tok atom }
+\-?         @decimal       { tok (number 10)}
+\-? '0' 'x' @hexadecimal   { tok (number 16)}
+\-? '0' 'o' @octal         { tok (number  8)}
 
-\" ($printable # [\"\\] | $white_no_nl | @escape)* \" { tok String }
+\" ($printable # [\"\\] | $white_no_nl | @escape)* \" { tok string }
 
 {
 
 tok f (AlexPn _ line column) str = PosToken line column (f str)
 
-data PosToken = PosToken Int Int Token
+-- | Construct a 'Number' token from a token using a
+-- given base. This function expect the token to be
+-- legal for the given base. This is checked by Alex.
+number ::
+  Integer    {- ^ base  -} ->
+  ByteString {- ^ token -} ->
+  Token
+number base str = Number $
+  case readInt base isDigit digitToInt (L8.unpack str) of
+    [(n,"")] -> n
+    _        -> error "Lexer.number: implementation failure"
+
+atom ::
+  ByteString {- ^ UTF-8 encoded text -} ->
+  Token
+atom = Atom . Text.decodeUtf8With Text.lenientDecode . L8.toStrict
+
+string ::
+  ByteString {- ^ UTF-8 encoded text -} ->
+  Token
+string = String
+       . read
+       . Text.unpack
+       . Text.decodeUtf8With Text.lenientDecode
+       . L8.toStrict
+
+data PosToken = PosToken Int Int Token -- ^ line column token
   deriving (Show)
 
 data Token
-  = Atom ByteString
-  | String ByteString
+  = Atom   Text
+  | String Text
   | Colon
   | OpenString
-  | Dash
-  | Number ByteString
+  | Bullet
+  | Number Integer
   | EmptyList
   | EmptyMap
   deriving (Show)
@@ -70,5 +107,5 @@ scanTokens str = go (alexStartPos,'\n',str)
                 AlexEOF -> return []
                 AlexError ((AlexPn _ line column),_,_) -> Left (line,column)
                 AlexSkip  inp' len     -> go inp'
-                AlexToken inp' len act -> fmap (act pos (L.take (fromIntegral len) str) :) (go inp')
+                AlexToken inp' len act -> fmap (act pos (L8.take (fromIntegral len) str) :) (go inp')
 }

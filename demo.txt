@@ -1,12 +1,19 @@
 debug-file: "debug.txt"
 
 servers:
+  -- Direct connection to freenode
   freenode:
     hostname: "chat.freenode.net"
-    port    : 6697
     nick    : "glguy"
     tls     : yes
+    port    : 6697
+
+  dalnet:
+    hostname: "chat.freenode.net"
+    nick    : "glguy"
+    tls     : yes
+    port    : 6697
 
 ignores:
-  - "nick1"
-  - "nick2"
+  * "nick1"
+  * "nick2"

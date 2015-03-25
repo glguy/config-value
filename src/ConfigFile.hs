@@ -1,17 +1,21 @@
 module ConfigFile where
 
 import Control.Applicative
-import Data.Map (Map)
 import Data.ByteString.Lazy (ByteString)
+import Data.Map (Map)
+import Data.Text (Text)
 import qualified Data.Map as Map
 
-newtype ConfigSection = ConfigSection (Map String ConfigValue)
+data ConfigSection = ConfigSection
+  { sectionName  :: Text
+  , sectionValue :: ConfigValue
+  }
   deriving (Read, Show)
 
 data ConfigValue
-  = Subsection ConfigSection
+  = ConfigSections [ConfigSection]
   | ConfigNumber Integer
-  | ConfigString String
+  | ConfigText   Text
   | ConfigBool   Bool
   | ConfigList   [ConfigValue]
   deriving (Read, Show)

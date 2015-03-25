@@ -10,10 +10,10 @@ import Lexer
 import ConfigFile
 import Data.Map (Map)
 import Data.ByteString.Lazy (ByteString)
+import Data.Text (Text)
 import qualified Data.ByteString.Lazy.Char8 as L8
 import qualified Data.Map as Map
-import qualified Data.Text.Lazy as Text
-import qualified Data.Text.Lazy.Encoding as Text
+import qualified Data.Text as Text
 
 type P = Parsec [PosToken] ParserState
 
@@ -59,22 +59,19 @@ prettyToken t = case t of
   String{} -> "string"
   Atom{}   -> "atom"
   Colon{}  -> "colon"
-  Dash{}   -> "dash"
+  Bullet{} -> "bullet"
   Number{} -> "number"
 
 numberToken :: P Integer
 numberToken = mytoken $ \t ->
   case t of
-    Number n ->
-      case L8.readInteger n of
-        Just (i, rest) | L8.null rest -> Just i
-        Nothing      -> error "numberToken: fatal lexer error"
-    _ -> Nothing
+    Number n -> Just n
+    _        -> Nothing
 
-stringToken :: P String
-stringToken = mytoken $ \t ->
+textToken :: P Text
+textToken = mytoken $ \t ->
   case t of
-    String n -> Just (read (Text.unpack (Text.decodeUtf8 n))) -- TODO: make efficient
+    String n -> Just n
     _        -> Nothing
 
 colonToken :: P ()
@@ -83,23 +80,23 @@ colonToken = mytoken $ \t ->
     Colon -> Just ()
     _     -> Nothing
 
-dashToken :: P ()
-dashToken = mytoken $ \t ->
+bulletToken :: P ()
+bulletToken = mytoken $ \t ->
   case t of
-    Dash -> Just ()
-    _    -> Nothing
+    Bullet -> Just ()
+    _      -> Nothing
 
 boolToken :: P Bool
 boolToken = mytoken $ \t ->
   case t of
-    Atom x | L8.map toLower x == L8.pack "yes" -> Just True
-           | L8.map toLower x == L8.pack "no"  -> Just False
-    _                                  -> Nothing
+    Atom x | Text.toCaseFold x == Text.pack "yes" -> Just True
+           | Text.toCaseFold x == Text.pack "no"  -> Just False
+    _                                             -> Nothing
 
-atomToken :: P String
+atomToken :: P Text
 atomToken = mytoken $ \t ->
   case t of
-    Atom x -> Just (Text.unpack (Text.decodeUtf8 x))
+    Atom x -> Just x
     _      -> Nothing
 
 emptyListToken :: P ()
@@ -114,18 +111,20 @@ emptyMapToken = mytoken $ \t ->
     EmptyMap -> Just ()
     _        -> Nothing
 
-parseSection :: P ConfigSection
-parseSection = fmap ConfigSection
-             ( Map.empty <$ emptyMapToken
-           <|> layout (Map.fromList <$> many1 (align *> parseSectionEntry)) )
-           <?> "config section"
+parseSections :: P [ConfigSection]
+parseSections = [] <$ emptyMapToken
+            <|> layout (many1 (align *> parseSection))
+            <?> "config sections"
 
-parseSectionEntry :: P (String, ConfigValue)
-parseSectionEntry =
+parseSection :: P ConfigSection
+parseSection =
   do k <- try (atomToken <* colonToken)
      indented
      v <- parseValue
-     return (k,v)
+     return ConfigSection
+       { sectionName    = k
+       , sectionValue   = v
+       }
 
 parseList :: P [ConfigValue]
 parseList = [] <$ emptyListToken
@@ -133,16 +132,16 @@ parseList = [] <$ emptyListToken
 
 parseListEntry :: P ConfigValue
 parseListEntry =
-  do _ <- dashToken
+  do _ <- bulletToken
      indented
      parseValue
 
 parseValue :: P ConfigValue
 parseValue
-    = fmap Subsection   parseSection
+    = fmap ConfigSections parseSections
   <|> fmap ConfigBool   boolToken
   <|> fmap ConfigNumber numberToken
-  <|> fmap ConfigString stringToken
+  <|> fmap ConfigText   textToken
   <|> fmap ConfigList   parseList
   <?> "value"
 
