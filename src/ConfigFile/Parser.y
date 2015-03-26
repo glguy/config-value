@@ -47,10 +47,10 @@ value ::                        { ConfigValue                 }
 simple ::                       { ConfigValue                 }
   : NUMBER                      { ConfigNumber $1             }
   | STRING                      { ConfigText   $1             }
-  | '{' inlinemap '}'           { ConfigSections []           }
   | 'yes'                       { ConfigBool True             }
   | 'no'                        { ConfigBool False            }
-  | '[' inlinelist ']'          { ConfigList (reverse $2)     }
+  | '{' '}'                     { ConfigSections []           }
+  | '[' inlinelist ']'          { ConfigList     $2           }
 
 sections ::                     { [ConfigSection]             }
   :          section            { [$1]                        }
@@ -65,22 +65,11 @@ list ::                         { [ConfigValue]               }
 
 inlinelist ::                   { [ConfigValue]               }
   :                             { []                          }
-  | inlinelist1                 { $1                          }
+  | inlinelist1                 { reverse $1                  }
 
 inlinelist1 ::                  { [ConfigValue]               }
   :                 simple      { [$1]                        }
   | inlinelist1 ',' simple      { $3 : $1                     }
-
-inlinemap ::                    { [ConfigSection]             }
-  :                             { []                          }
-  | inlinemap1                  { $1                          }
-
-inlinemap1 ::                   { [ConfigSection]             }
-  : inlinesection               { [$1]                        }
-  | inlinemap1 ',' inlinesection { $3 : $1                    }
-
-inlinesection ::                { ConfigSection               }
-  : SECTION simple              { ConfigSection $1 $2         }
 
 
 
