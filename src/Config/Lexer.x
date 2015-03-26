@@ -1,5 +1,7 @@
 {
-module ConfigFile.Lexer
+{-# OPTIONS_GHC -Wnot #-}
+{-# LANGUAGE Trustworthy #-}
+module Config.Lexer
   ( scanTokens
   ) where
 
@@ -15,7 +17,7 @@ import qualified Data.Text                  as Text
 import qualified Data.Text.Encoding         as Text
 import qualified Data.Text.Encoding.Error   as Text
 
-import ConfigFile.Tokens
+import Config.Tokens
 
 }
 

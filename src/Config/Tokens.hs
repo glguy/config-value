@@ -1,4 +1,4 @@
-module ConfigFile.Tokens
+module Config.Tokens
   ( Token(..)
   , PosToken(..)
   , layoutPass

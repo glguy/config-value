@@ -1,6 +1,6 @@
-name:                config-file
+name:                config-value
 version:             0.1
-synopsis:            Simple, layout-based value language intended for small configuration files.
+synopsis:            Simple, layout-based value language similar to YAML or JSON
 license:             MIT
 license-file:        LICENSE
 author:              Eric Mertens
@@ -9,15 +9,16 @@ copyright:           2015 Eric Mertens
 category:            Language
 build-type:          Simple
 cabal-version:       >=1.10
--- description:         
 
 library
 
-  exposed-modules:     ConfigFile,
-                       ConfigFile.Parser
+  exposed-modules:     Config
 
-  other-modules:       ConfigFile.Lexer,
-                       ConfigFile.Tokens
+  other-modules:       Config.Lexer,
+                       Config.Parser,
+                       Config.Tokens,
+                       Config.Value
+
   build-depends:       base       >= 4.7     && < 4.8,
                        array      >= 0.5     && < 0.6,
                        bytestring >= 0.10.4  && < 0.11,
