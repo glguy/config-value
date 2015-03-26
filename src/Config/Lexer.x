@@ -53,7 +53,9 @@ $cntrl          = [A-Z@\[\\\]\^_]
 
 config :-
 
+<0> {
 $white+;
+
 "--" [^\n]* ;
 
 [Yy][Ee][Ss]            { tok (const Yes)               }
@@ -71,18 +73,71 @@ $white+;
 \" @string* \"          { tok string                    }
 
 $alpha [$alpha $digit \-]* $white_no_nl* \: { tok section }
+}
+
+<0,comment> "{-"        { startComment }
+
+<comment> {
+"-}"                    { endCommentString }
+\"                      { startCommentString }
+[^\" \- \{]+            ;
+\-                      ;
+\n                      ;
+\{                      ;
+}
+
+<commentstring> {
+\"                      { endCommentString   }
+\n                      { endCommentString   }
+\\ \"                   ;
+.                       ;
+}
 
 
 {
+
+data LexS
+  = InNormal
+  | InComment CommentType AlexPosn [AlexPosn]
+
+data CommentType = CommentState | StringState
+
+stateToInt :: LexS -> Int
+stateToInt InNormal                     = 0
+stateToInt (InComment CommentState _ _) = comment
+stateToInt (InComment StringState  _ _) = commentstring
+
+--  token starting position -> token bytes -> lexer state -> (new state, token)
+type Action = AlexPosn -> ByteString -> LexS -> (LexS, Maybe PosToken)
 
 -- Helper function for building a PosToken given a token constructor
 -- function, a position, and the matched token.
 tok ::
   (ByteString -> Token) {- ^ token constructor       -} ->
-  AlexPosn              {- ^ token starting position -} ->
-  ByteString            {- ^ token bytes             -} ->
-  PosToken
-tok f (AlexPn _ line column) str = PosToken line column (f str)
+  Action
+tok f (AlexPn _ line column) str st = (st, Just (PosToken line column (f str)))
+
+simpleAction :: (AlexPosn -> ByteString -> LexS -> LexS) -> Action
+simpleAction f pos bs st = (f pos bs st, Nothing)
+
+startComment :: Action
+startComment = simpleAction $ \posn _ st ->
+  case st of
+    InNormal    -> InComment CommentState posn []
+    InComment _ posn1 posns -> InComment CommentState posn (posn1:posns)
+
+startCommentString :: Action
+startCommentString = simpleAction $ \posn _ st ->
+  case st of
+    InNormal    -> error "startCommentString: Lexer failure"
+    InComment _ posn1 posns -> InComment StringState posn (posn1:posns)
+
+endCommentString :: Action
+endCommentString = simpleAction $ \_ _ st ->
+  case st of
+    InNormal                   -> error "endComment: Lexer failure"
+    InComment _ _ (posn:posns) -> InComment CommentState posn posns
+    InComment _ _ []           -> InNormal
 
 -- | Construct a 'Number' token from a token using a
 -- given base. This function expect the token to be
@@ -127,15 +182,21 @@ string = maybe Error String
 -- In the case of an error the line and column of the error
 -- are returned instead.
 scanTokens ::
-  ByteString                  {- ^ UTF-8 encoded source        -} ->
-  Either (Int,Int) [PosToken] {- ^ Either (Line,Column) Tokens -}
-scanTokens str = go (alexStartPos,'\n',str)
-  where go inp@(pos,_,str) =
-          case alexScan inp 0 of
-                AlexEOF -> return [PosToken (alexLine pos) 0 EOF]
-                AlexError ((AlexPn _ line column),_,_) -> Left (line,column)
-                AlexSkip  inp' len     -> go inp'
-                AlexToken inp' len act -> fmap (act pos (utf8Take len str) :) (go inp')
+  ByteString {- ^ UTF-8 encoded source -} ->
+  [PosToken] {- ^ Tokens               -}
+scanTokens str = go InNormal (alexStartPos,'\n',str)
+  where go st inp@(pos,_,str) =
+          case alexScan inp (stateToInt st) of
+                AlexEOF ->
+                  case st of
+                    InNormal -> [PosToken (alexLine pos) 0 EOF]
+                    InComment _ (AlexPn _ line column) _ -> [PosToken line column Error]
+                AlexError (AlexPn _ line column,_,_) -> [PosToken line column Error]
+                AlexSkip  inp' len     -> go st inp'
+                AlexToken inp' len act ->
+                  case act pos (utf8Take len str) st of
+                    (st', Nothing) ->     go st' inp'
+                    (st', Just x ) -> x : go st' inp'
 
 alexLine :: AlexPosn -> Int
 alexLine (AlexPn _ line _) = line

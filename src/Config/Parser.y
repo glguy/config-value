@@ -86,9 +86,8 @@ parse ::
   ByteString             {- ^ UTF-8 encoded source        -} ->
   Either (Int,Int) Value {- ^ Either (Line,Column) Result -}
 parse bytes =
-  do toks <- scanTokens bytes
-     let toks' = layoutPass toks
-     (_,_,x) <- runParseM layout (error "previous token") toks'
+  do let toks = layoutPass (scanTokens bytes)
+     (_,_,x) <- runParseM layout (error "previous token") toks
      return x
 
 instance Functor ParseM where

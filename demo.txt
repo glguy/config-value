@@ -1,19 +1,32 @@
-debug-file: "debug.txt"
+-- Line comments until newline
+layout:
+  based:
+    configuration:
+      {} -- empty section
 
-servers:
-  -- Direct connection to freenode
-  freenode:
-    hostname: "chat.freenode.net"
-    nick    : "glguy"
-    tls     : yes
-    port    : 6697
+    sections:
+     "glguy"
 
-  dalnet:
-    hostname: "chat.freenode.net"
-    nick    : "glguy"
-    tls     : yes
-    port    : 6697
+    {- Block comments
+       {- nested comments -}
+       "O'caml style {- strings in comments"
+       so you can comment out otherwise valid
+       portions of your config
+    -}
+    booleans   : yes
+    complicated: no
 
-ignores:
-  * "nick1"
-  * "nick2"
+    decimal    : -1234
+    hexadecimal: 0x1234
+    octal      : 0o1234
+    binary     : 0b1010
+
+lists:
+   * 1
+   * [ "inline", "lists" ]
+   * * "nestable"
+     * "layout"
+     * "lists"
+   * 3
+
+unicode : "standard Haskell format strings (1 ≤ 2)\x2228(2 ≤ 3)"
