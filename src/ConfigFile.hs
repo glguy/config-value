@@ -1,16 +1,22 @@
-module ConfigFile where
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+
+module ConfigFile
+  ( ConfigSection(..)
+  , ConfigValue(..)
+  ) where
 
 import Control.Applicative
 import Data.ByteString.Lazy (ByteString)
-import Data.Map (Map)
 import Data.Text (Text)
-import qualified Data.Map as Map
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 
 data ConfigSection = ConfigSection
   { sectionName  :: Text
   , sectionValue :: ConfigValue
   }
-  deriving (Read, Show)
+  deriving (Read, Show, Typeable, Data, Generic)
 
 data ConfigValue
   = ConfigSections [ConfigSection]
@@ -18,4 +24,4 @@ data ConfigValue
   | ConfigText   Text
   | ConfigBool   Bool
   | ConfigList   [ConfigValue]
-  deriving (Read, Show)
+  deriving (Read, Show, Typeable, Data, Generic)

@@ -15,47 +15,74 @@ import ConfigFile.Tokens  (PosToken(..), Token(..), layoutPass)
 
 %token
 
-'yes'  { PosToken _ _ (Atom "yes") }
-'no'   { PosToken _ _ (Atom "no") }
-ATOM   { PosToken _ _ (Atom $$) }
-STRING { PosToken _ _ (String $$) }
-':'    { PosToken _ _ Colon }
-'*'    { PosToken _ _ Bullet }
-NUMBER { PosToken _ _ (Number $$) }
-'[]'   { PosToken _ _ EmptyList  }
-'{}'   { PosToken _ _ EmptyMap  }
+'yes'  { PosToken _ _ Yes          }
+'no'   { PosToken _ _ No           }
+SECTION{ PosToken _ _ (Section $$) }
+STRING { PosToken _ _ (String $$)  }
+'*'    { PosToken _ _ Bullet       }
+NUMBER { PosToken _ _ (Number $$)  }
+'['    { PosToken _ _ OpenList     }
+','    { PosToken _ _ Comma        }
+']'    { PosToken _ _ CloseList    }
+'{'    { PosToken _ _ OpenMap      }
+'}'    { PosToken _ _ CloseMap     }
 
-START  { PosToken _ _ LayoutStart }
-END    { PosToken _ _ LayoutEnd }
-SEP    { PosToken _ _ LayoutSeparator }
+END    { PosToken _ _ LayoutEnd    }
 
-%name value value
+%name layout layout
 %tokentype { PosToken }
 %monad     { ParseM   }
 %lexer     { lexerP } { PosToken _ _ EOF }
 
 %%
 
-value :: { ConfigValue }
-  : START fields END { ConfigSections (reverse $2) }
-  | NUMBER           { ConfigNumber $1 }
-  | STRING           { ConfigText   $1 }
-  | '[]'             { ConfigList     [] }
-  | '{}'             { ConfigSections [] }
-  | 'yes'            { ConfigBool True   }
-  | 'no'             { ConfigBool False  }
-  | START list END   { ConfigList (reverse $2) }
+layout ::                       { ConfigValue                 }
+  : value END                   { $1                          }
 
-fields :: { [ConfigSection] }
-  : field            { [$1] }
-  | fields SEP field { $3 : $1 }
+value ::                        { ConfigValue                 }
+  : sections                    { ConfigSections (reverse $1) }
+  | list                        { ConfigList     (reverse $1) }
+  | simple                      { $1                          }
 
-field :: { ConfigSection }
-  : ATOM ':' value   { ConfigSection $1 $3 }
+simple ::                       { ConfigValue                 }
+  : NUMBER                      { ConfigNumber $1             }
+  | STRING                      { ConfigText   $1             }
+  | '{' inlinemap '}'           { ConfigSections []           }
+  | 'yes'                       { ConfigBool True             }
+  | 'no'                        { ConfigBool False            }
+  | '[' inlinelist ']'          { ConfigList (reverse $2)     }
 
-list :: { [ConfigValue] }
-  : '*' value  { [$2] }
-  | list '*' value { $3 : $1 }
+sections ::                     { [ConfigSection]             }
+  :          section            { [$1]                        }
+  | sections section            { $2 : $1                     }
+
+section ::                      { ConfigSection               }
+  : SECTION layout              { ConfigSection $1 $2         }
+
+list ::                         { [ConfigValue]               }
+  :      '*' layout             { [$2]                        }
+  | list '*' layout             { $3 : $1                     }
+
+inlinelist ::                   { [ConfigValue]               }
+  :                             { []                          }
+  | inlinelist1                 { $1                          }
+
+inlinelist1 ::                  { [ConfigValue]               }
+  :                 simple      { [$1]                        }
+  | inlinelist1 ',' simple      { $3 : $1                     }
+
+inlinemap ::                    { [ConfigSection]             }
+  :                             { []                          }
+  | inlinemap1                  { $1                          }
+
+inlinemap1 ::                   { [ConfigSection]             }
+  : inlinesection               { [$1]                        }
+  | inlinemap1 ',' inlinesection { $3 : $1                    }
+
+inlinesection ::                { ConfigSection               }
+  : SECTION simple              { ConfigSection $1 $2         }
+
+
 
 {
 
@@ -67,7 +94,7 @@ parse :: ByteString -> Either (Int,Int) ConfigValue
 parse bytes =
   do toks <- scanTokens bytes
      let toks' = layoutPass [0] toks
-     (_,x) <- runParseM value toks'
+     (_,x) <- runParseM layout toks'
      return x
 
 instance Functor ParseM where
