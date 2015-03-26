@@ -38,7 +38,7 @@ data Token
 layoutPass ::
   [PosToken] {- ^ tokens without layout markers -} ->
   [PosToken] {- ^ tokens with    layout markers -}
-layoutPass = layoutPass' [0]
+layoutPass = layoutPass' [1]
 
 -- | Worker function for 'layoutPass'. This function keeps
 -- a stack of the current layout scopes. New scopes are
@@ -51,13 +51,23 @@ layoutPass' ::
 
 layoutPass' _ []  = []
 
+-- Layout ends when a token occurs BEFORE the current layout scope.
 layoutPass' (col:cols) (t:ts)
-  | posColumn t <= col
+  | posColumn t < col
   = t { posToken = LayoutEnd } : layoutPass' cols (t:ts)
 
-layoutPass' stack (t:ts)
-  | isLayoutHerald t
-  = t : layoutPass' (posColumn t:stack) ts
+-- Layout FAILS when a token occurs AFTER the current layout scope
+-- This is quite restrictive but the language is simple enough
+-- that it's OK.
+layoutPass' (col:_) (t:ts)
+  | col < posColumn t = t { posToken = Error } : t : ts
+
+-- Layout extends out to the token after token.
+layoutPass' stack (t1:t2:ts)
+  | isLayoutHerald t1
+  = if posColumn t1 < posColumn t2
+     then t1 : layoutPass' (posColumn t2:stack) (t2:ts)
+     else t1 : t2 { posToken = Error } : t2 : ts
 
 layoutPass' stack (t:ts) = t : layoutPass' stack ts
 
