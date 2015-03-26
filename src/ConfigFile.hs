@@ -6,8 +6,6 @@ module ConfigFile
   , ConfigValue(..)
   ) where
 
-import Control.Applicative
-import Data.ByteString.Lazy (ByteString)
 import Data.Text (Text)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)

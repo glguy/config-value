@@ -3,15 +3,12 @@ module ConfigFile.Lexer
   ( scanTokens
   ) where
 
-import Control.Applicative
-import Control.Monad
 import Data.Bits            ((.&.))
 import Data.ByteString.Lazy (ByteString)
 import Data.Char            (isDigit, digitToInt, isSpace)
-import Data.Int             (Int64)
-import Data.Text            (Text)
 import Data.Word            (Word8)
 import Numeric              (readInt)
+import Text.Read            (readMaybe)
 import qualified Data.ByteString.Lazy       as L
 import qualified Data.ByteString.Lazy.Char8 as L8
 import qualified Data.Text                  as Text
@@ -24,27 +21,33 @@ import ConfigFile.Tokens
 
 %wrapper "posn-bytestring"
 
-$alpha = [A-Za-z]
-$digit = [0-9]
-$octdigit = [0-7]
-$hexdigit = [0-9a-fA-F]
-$bindigit = [0-1]
-$white_no_nl = $white # \n
-$charesc = [abfnrtv\\\"'&]
-$cntrl   = [A-Z@\[\\\]\^_]
+$alpha          = [A-Za-z]
+$digit          = [0-9]
+$octdigit       = [0-7]
+$hexdigit       = [0-9a-fA-F]
+$bindigit       = [0-1]
+$white_no_nl    = $white # \n
+$charesc        = [abfnrtv\\\"'&]
+$cntrl          = [A-Z@\[\\\]\^_]
 
 -- Copied from Haskell 2010
-@ascii   = \^ $cntrl
-         | NUL | SOH | STX | ETX | EOT | ENQ | ACK
-         | BEL | BS | HT | LF | VT | FF | CR | SO | SI | DLE
-         | DC1 | DC2 | DC3 | DC4 | NAK | SYN | ETB | CAN
-         | EM | SUB | ESC | FS | GS | RS | US | SP | DEL
-@decimal = $digit+
-@octal   = $octdigit+
-@binary  = $bindigit+
-@hexadecimal = $hexdigit+
-@escape = \\ ($charesc | @ascii | @decimal | 'o' @octal | 'x' @hexadecimal)
+@ascii          = \^ $cntrl
+                | NUL | SOH | STX | ETX | EOT | ENQ | ACK | BEL
+                | BS  | HT  | LF  | VT  | FF  | CR  | SO  | SI
+                | DLE | DC1 | DC2 | DC3 | DC4 | NAK | SYN | ETB
+                | CAN | EM  | SUB | ESC | FS  | GS  | RS  | US
+                | SP  | DEL
+@decimal        = $digit+
+@octal          = $octdigit+
+@binary         = $bindigit+
+@hexadecimal    = $hexdigit+
+@escape         =   $charesc
+                |   @ascii
+                |   @decimal
+                | o @octal
+                | x @hexadecimal
 
+@string         = ([^ \" \\ \n] | \\ @escape)*
 
 config :-
 
@@ -63,34 +66,41 @@ $white+;
 "-"?      @decimal      { tok (number 0 10)             }
 "-"? "0o" @octal        { tok (number 2  8)             }
 "-"? "0b" @binary       { tok (number 2  2)             }
+\" @string* \"          { tok string                    }
 
 $alpha [$alpha $digit \-]* $white_no_nl* \: { tok section }
 
-\" ([^\"\\\n] | @escape)* \" { tok string }
 
 {
 
+-- Helper function for building a PosToken given a token constructor
+-- function, a position, and the matched token.
+tok ::
+  (ByteString -> Token) {- ^ token constructor       -} ->
+  AlexPosn              {- ^ token starting position -} ->
+  ByteString            {- ^ token bytes             -} ->
+  PosToken
 tok f (AlexPn _ line column) str = PosToken line column (f str)
 
 -- | Construct a 'Number' token from a token using a
 -- given base. This function expect the token to be
 -- legal for the given base. This is checked by Alex.
 number ::
-  Int        {- ^ prefix length -} ->
-  Integer    {- ^ base          -} ->
-  ByteString {- ^ token         -} ->
+  Int        {- ^ prefix length      -} ->
+  Integer    {- ^ base               -} ->
+  ByteString {- ^ sign-prefix-digits -} ->
   Token
-number prefixLen base str = Number $
+number prefixLen base str =
   case readInt base isDigit digitToInt str2 of
-    [(n,"")] -> s*n
-    _        -> error "Lexer.number: implementation failure"
+    [(n,"")] -> Number (s*n)
+    _        -> Error
   where
   str2     = drop prefixLen str1
   (s,str1) = case L8.unpack str of
                '-':rest -> (-1, rest)
                rest     -> ( 1, rest)
 
-
+-- | Process a section heading token
 section ::
   ByteString {- ^ UTF-8 encoded text -} ->
   Token
@@ -101,16 +111,22 @@ section
   . Text.decodeUtf8With Text.lenientDecode
   . L8.toStrict
 
+-- | Parse a string literal processing the escapes.
 string ::
   ByteString {- ^ UTF-8 encoded text -} ->
   Token
-string = String
-       . read
+string = maybe Error String
+       . readMaybe
        . Text.unpack
        . Text.decodeUtf8With Text.lenientDecode
        . L.toStrict
 
-scanTokens :: ByteString -> Either (Int,Int) [PosToken]
+-- | Attempt to produce a token stream from an input file.
+-- In the case of an error the line and column of the error
+-- are returned instead.
+scanTokens ::
+  ByteString                  {- ^ UTF-8 encoded source        -} ->
+  Either (Int,Int) [PosToken] {- ^ Either (Line,Column) Tokens -}
 scanTokens str = go (alexStartPos,'\n',str)
   where go inp@(pos,_,str) =
           case alexScan inp 0 of
@@ -122,12 +138,20 @@ scanTokens str = go (alexStartPos,'\n',str)
 alexLine :: AlexPosn -> Int
 alexLine (AlexPn _ line _) = line
 
-utf8Take :: Int -> ByteString -> ByteString
+-- | Take the request number of codepoints from a UTF-8 encoded
+-- ByteString. UTF-8 is a variable length encoding, so some
+-- codepoints will be longer than others.
+utf8Take ::
+  Int        {- ^ Desired prefix length -} ->
+  ByteString {- ^ UTF-8 encoded text    -} ->
+  ByteString {- ^ UTF-8 encoded text    -}
 utf8Take len bs =
   case drop len (L.findIndices isStartByte bs) of
     []    -> bs
     pos:_ -> L.take pos bs
 
+-- | Return True when applied to the first byte of the UTF-8
+-- encoding of a Unicode codepoint.
 isStartByte :: Word8 -> Bool
 isStartByte x = x .&. 0xc0 /= 0x80
 
