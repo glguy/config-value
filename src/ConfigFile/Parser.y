@@ -76,7 +76,7 @@ inlinelist1 ::                  { [ConfigValue]                 }
 {
 
 newtype ParseM a = ParseM
-  { runParseM :: [PosToken] -> Either (Int,Int) ([PosToken], a) }
+  { runParseM :: PosToken -> [PosToken] -> Either (Int,Int) (PosToken,[PosToken], a) }
 
 -- | Parse a configuration file or return the line and column of
 -- the first error detected.
@@ -86,7 +86,7 @@ parse ::
 parse bytes =
   do toks <- scanTokens bytes
      let toks' = layoutPass toks
-     (_,x) <- runParseM layout toks'
+     (_,_,x) <- runParseM layout (error "previous token") toks'
      return x
 
 instance Functor ParseM where
@@ -97,24 +97,20 @@ instance Applicative ParseM where
   pure          = return
 
 instance Monad ParseM where
-  return x      = ParseM $ \toks ->
-                     do return (toks,x)
-  m >>= f       = ParseM $ \toks ->
-                     do (toks',x) <- runParseM m toks
-                        runParseM (f x) toks'
+  return x      = ParseM $ \t ts ->
+                     do return (t,ts,x)
+  m >>= f       = ParseM $ \t ts ->
+                     do (t',ts',x) <- runParseM m t ts
+                        runParseM (f x) t' ts'
 
 lexerP :: (PosToken -> ParseM a) -> ParseM a
-lexerP k = ParseM $ \toks ->
+lexerP k = ParseM $ \_ toks ->
   case toks of
     []      -> error "Unexpected end of token stream"
-    t:toks' ->
-      let ParseM p = k t
-      in p toks'
+    t:toks' -> runParseM (k t) t toks'
 
 -- required by 'happy'
 happyError :: ParseM a
-happyError = ParseM $ \toks ->
-  case toks of
-    [] -> Left (1,0) -- literally empty file in our grammar
-    PosToken line column _:_ -> Left (line,column)
+happyError = ParseM $ \(PosToken line column _) _ -> Left (line,column)
+
 }
