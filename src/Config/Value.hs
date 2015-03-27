@@ -21,7 +21,7 @@ data Section = Section
 
 data Value
   = Sections [Section]
-  | Number   Integer
+  | Number   Int Integer -- ^ base number
   | Text     Text
   | Bool     Bool
   | List     [Value]

@@ -18,7 +18,7 @@ data Token
   | String Text
   | Bullet
   | Comma
-  | Number Integer
+  | Number Int Integer
   | OpenList
   | CloseList
   | OpenMap
@@ -29,6 +29,7 @@ data Token
   | Error
 
   -- "Virtual" tokens used by the subsequent layout processor
+  | LayoutSep
   | LayoutEnd
   | EOF
   deriving (Show)
@@ -38,25 +39,22 @@ data Token
 layoutPass ::
   [PosToken] {- ^ tokens without layout markers -} ->
   [PosToken] {- ^ tokens with    layout markers -}
-layoutPass toks = foldr step (\_ _ -> []) toks False [1]
+layoutPass toks = foldr step (\_ -> []) toks [-1]
 
-step :: PosToken -> (Bool -> [Int] -> [PosToken]) -> Bool -> [Int] -> [PosToken]
+step :: PosToken -> ([Int] -> [PosToken]) -> ([Int] -> [PosToken])
 
 -- start blocks must be indented
 -- tokens before the current layout end the current layout
-step t next startBlock (col:cols)
-  | posColumn t <= col && startBlock = [t {posToken = Error}]
-  | posColumn t < col = t {posToken = LayoutEnd} : step t next startBlock cols
+step t next (col:cols)
 
--- non-start layout needs to land on the current block
-step t _ False (col:_)
-  | usesLayout t && posColumn t /= col = [t {posToken = Error}]
+  | usesLayout t && posColumn t > col = t : next (posColumn t:col:cols)
 
-step t next startBlock cols =
-  t : next (usesLayout t) cols'
-  where
-  cols' | startBlock = posColumn t : cols
-        | otherwise  = cols
+  | usesLayout t && posColumn t == col = t{posToken=LayoutSep}
+                                       : t : next (col:cols)
+
+  | posColumn t <= col = t{posToken=LayoutEnd} : step t next cols
+
+step t next cols = t : next cols
 
 
 -- | Return True when a token starts a layout scope.
