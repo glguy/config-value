@@ -7,7 +7,7 @@ module Config.Lexer
 
 import Data.Bits            ((.&.))
 import Data.ByteString.Lazy (ByteString)
-import Data.Char            (isDigit, digitToInt, isSpace)
+import Data.Char            (digitToInt, isSpace)
 import Data.Word            (Word8)
 import Numeric              (readInt)
 import Text.Read            (readMaybe)
@@ -148,7 +148,7 @@ number ::
   ByteString {- ^ sign-prefix-digits -} ->
   Token
 number prefixLen base str =
-  case readInt (fromIntegral base) isDigit digitToInt str2 of
+  case readInt (fromIntegral base) (const True) digitToInt str2 of
     [(n,"")] -> Number base (s*n)
     _        -> Error
   where
