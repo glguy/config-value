@@ -34,7 +34,9 @@ module Config
   ( Section(..)
   , Value(..)
   , parse
+  , pretty
   ) where
 
 import Config.Value
 import Config.Parser
+import Config.Pretty
