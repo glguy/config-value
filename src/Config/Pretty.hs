@@ -8,6 +8,7 @@ import           Numeric(showIntAtBase)
 
 import Config.Value
 
+-- | Pretty-print a 'Value' as shown in the example.
 pretty :: Value -> Doc
 pretty value =
   case value of

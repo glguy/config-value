@@ -72,14 +72,15 @@ $white+;
 "-"? "0b" @binary       { tok (number 2  2)             }
 \" @string* \"          { tok string                    }
 
-$alpha [$alpha $digit \-]* $white_no_nl* \: { tok section }
+$alpha [$alpha $digit \-]* $white_no_nl* \:
+                        { tok section                   }
 }
 
-<0,comment> "{-"        { startComment }
+<0,comment> "{-"        { startComment                  }
 
 <comment> {
-"-}"                    { endCommentString }
-\"                      { startCommentString }
+"-}"                    { endCommentString              }
+\"                      { startCommentString            }
 [^\" \- \{]+            ;
 \-                      ;
 \n                      ;
@@ -87,8 +88,8 @@ $alpha [$alpha $digit \-]* $white_no_nl* \: { tok section }
 }
 
 <commentstring> {
-\"                      { endCommentString   }
-\n                      { endCommentString   }
+\"                      { endCommentString              }
+\n                      { endCommentString              }
 \\ \"                   ;
 .                       ;
 }

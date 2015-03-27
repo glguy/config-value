@@ -28,7 +28,7 @@
 --      * "lists"
 --    * 3
 --
--- unicode : "standard Haskell format strings (1 ≤ 2)\x2228(2 ≤ 3)"
+-- unicode : "standard Haskell format strings (1 ≤ 2)\\x2228(2 ≤ 3)"
 -- @
 module Config
   ( Section(..)
