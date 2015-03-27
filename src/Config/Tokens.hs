@@ -1,3 +1,5 @@
+-- | This module provides the token type used in the lexer and
+-- parser and provides the extra pass to insert layout tokens.
 module Config.Tokens
   ( Token(..)
   , PosToken(..)
@@ -6,6 +8,7 @@ module Config.Tokens
 
 import Data.Text (Text)
 
+-- | A 'PosToken' is a 'Token' annotated with its line and column.
 data PosToken = PosToken
   { posLine   :: Int
   , posColumn :: Int
@@ -13,6 +16,7 @@ data PosToken = PosToken
   }
   deriving (Show)
 
+-- | The token type used by "Config.Lexer" and "Config.Parser"
 data Token
   = Section Text
   | String Text
@@ -41,6 +45,7 @@ layoutPass ::
   [PosToken] {- ^ tokens with    layout markers -}
 layoutPass toks = foldr step (\_ -> []) toks [-1]
 
+-- | Single step of the layout pass
 step :: PosToken -> ([Int] -> [PosToken]) -> ([Int] -> [PosToken])
 
 -- start blocks must be indented

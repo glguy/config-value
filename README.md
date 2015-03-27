@@ -1,4 +1,6 @@
-# config-lang
+# config-value
+
+[![Build Status](https://secure.travis-ci.org/glguy/config-value.svg)](http://travis-ci.org/glguy/config-value)
 
 This package implements a simple, layout-based value definition language which I intend
 to be used for supplying configuration values to various applications.

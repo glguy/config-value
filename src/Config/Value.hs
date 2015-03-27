@@ -13,12 +13,14 @@ import Data.Text    (Text)
 import Data.Data    (Data, Typeable)
 import GHC.Generics (Generic)
 
+-- | A single section of a 'Value'
 data Section = Section
   { sectionName  :: Text
   , sectionValue :: Value
   }
   deriving (Eq, Read, Show, Typeable, Data, Generic)
 
+-- | Sum type of the values supported by this language.
 data Value
   = Sections [Section]
   | Number   Int Integer -- ^ base number

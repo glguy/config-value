@@ -28,7 +28,7 @@ library
                        Config.Pretty,
                        Config.Value
 
-  build-depends:       base       >= 4.7     && < 4.8,
+  build-depends:       base       >= 4.7     && < 4.9,
                        array      >= 0.5     && < 0.6,
                        bytestring >= 0.10.4  && < 0.11,
                        pretty     >= 1.1.1.1 && < 1.2,

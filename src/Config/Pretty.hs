@@ -1,3 +1,4 @@
+-- | Pretty-printing implementation for 'Value'
 module Config.Pretty where
 
 import           Data.Char (isPrint, isDigit,intToDigit)
@@ -9,6 +10,9 @@ import           Numeric(showIntAtBase)
 import Config.Value
 
 -- | Pretty-print a 'Value' as shown in the example.
+-- Sections will nest complex values underneat with
+-- indentation and simple values will be rendered on
+-- the same line as their section.
 pretty :: Value -> Doc
 pretty value =
   case value of
