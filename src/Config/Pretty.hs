@@ -10,14 +10,14 @@ import           Numeric(showIntAtBase)
 import Config.Value
 
 -- | Pretty-print a 'Value' as shown in the example.
--- Sections will nest complex values underneat with
+-- Sections will nest complex values underneath with
 -- indentation and simple values will be rendered on
 -- the same line as their section.
 pretty :: Value -> Doc
 pretty value =
   case value of
     Sections [] -> text "{}"
-    Sections xs -> vcat (map prettySection xs)
+    Sections xs -> prettySections xs
     Number b n  -> prettyNum b n
     Text t      -> prettyText (Text.unpack t)
     Bool b      -> if b then text "yes" else text "no"
@@ -46,15 +46,31 @@ prettyText = doubleQuotes . cat . snd . mapAccumL ppChar True
           | otherwise = (False, char '\\' <> int (fromEnum x))
 
 
-prettySection :: Section -> Doc
-prettySection s
-  | isBig val = lab $$ nest 2 (pretty val)
-  | otherwise = lab <+> pretty val
-
+prettySections :: [Section] -> Doc
+prettySections ss = prettySmallSections small $$ rest
   where
-  lab = text (Text.unpack (sectionName s)) <> colon
-  val = sectionValue s
+  (small,big) = break (isBig . sectionValue) ss
+  rest        = case big of
+                  []     -> empty
+                  b : bs -> prettyBigSection b $$ prettySections bs
 
+prettyBigSection :: Section -> Doc
+prettyBigSection s =
+  text (Text.unpack (sectionName s)) <> colon
+  $$ nest 2 (pretty (sectionValue s))
+
+prettySmallSections :: [Section] -> Doc
+prettySmallSections ss = vcat (map pp annotated)
+  where
+  annotate s = (Text.length (sectionName s), s)
+  annotated  = map annotate ss
+  indent     = 1 + maximum (0 : map fst annotated)
+  pp (l,s)   = prettySmallSection (indent - l) s
+
+prettySmallSection :: Int -> Section -> Doc
+prettySmallSection n s =
+  text (Text.unpack (sectionName s)) <> colon <>
+    text (replicate n ' ') <> pretty (sectionValue s)
 
 isBig :: Value -> Bool
 isBig (Sections (_:_))  = True

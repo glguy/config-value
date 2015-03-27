@@ -17,6 +17,7 @@ layout:
     complicated: no
 
     decimal    : -1234
+    complicated: addition: {}
     hexadecimal: 0xBEEF
     hexadecimal: -0xDEAD
     octal      : 0o1234
