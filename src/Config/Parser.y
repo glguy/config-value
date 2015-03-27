@@ -20,7 +20,7 @@ import qualified Config.Tokens as T
 
 SECTION                         { PosToken _ _ (T.Section $$)   }
 STRING                          { PosToken _ _ (T.String $$)    }
-NUMBER                          { PosToken _ _ (T.Number $$)    }
+NUMBER                          { PosToken _ _ $$@T.Number{}    }
 'yes'                           { PosToken _ _ T.Yes            }
 'no'                            { PosToken _ _ T.No             }
 '*'                             { PosToken _ _ T.Bullet         }
@@ -29,25 +29,23 @@ NUMBER                          { PosToken _ _ (T.Number $$)    }
 ']'                             { PosToken _ _ T.CloseList      }
 '{'                             { PosToken _ _ T.OpenMap        }
 '}'                             { PosToken _ _ T.CloseMap       }
+SEP                             { PosToken _ _ T.LayoutSep      }
 END                             { PosToken _ _ T.LayoutEnd      }
 
 %tokentype                      { PosToken                      }
 %lexer { lexerP }               { PosToken _ _ T.EOF            }
 %monad { ParseM }
-%name layout layout
+%name value value
 
 %%
 
-layout ::                       { Value                         }
-  : value END                   { $1                            }
-
 value ::                        { Value                         }
-  : sections                    { Sections (reverse $1)         }
-  | list                        { List     (reverse $1)         }
+  : sections END                { Sections (reverse $1)         }
+  | list     END                { List     (reverse $1)         }
   | simple                      { $1                            }
 
 simple ::                       { Value                         }
-  : NUMBER                      { Number $1                     }
+  : NUMBER                      { number $1                     }
   | STRING                      { Text   $1                     }
   | 'yes'                       { Bool True                     }
   | 'no'                        { Bool False                    }
@@ -55,15 +53,15 @@ simple ::                       { Value                         }
   | '[' inlinelist ']'          { List     $2                   }
 
 sections ::                     { [Section]                     }
-  :          section            { [$1]                          }
-  | sections section            { $2 : $1                       }
+  :              section        { [$1]                          }
+  | sections SEP section        { $3 : $1                       }
 
 section ::                      { Section                       }
-  : SECTION layout              { Section $1 $2                 }
+  : SECTION value               { Section $1 $2                 }
 
 list ::                         { [Value]                       }
-  :      '*' layout             { [$2]                          }
-  | list '*' layout             { $3 : $1                       }
+  :          '*' value          { [$2]                          }
+  | list SEP '*' value          { $4 : $1                       }
 
 inlinelist ::                   { [Value]                       }
   :                             { []                            }
@@ -77,6 +75,10 @@ inlinelist1 ::                  { [Value]                       }
 
 {
 
+number :: T.Token -> Value
+number (T.Number base val) = Number base val
+number _                   = error "Config.Parser.number: fatal error"
+
 newtype ParseM a = ParseM
   { runParseM :: PosToken -> [PosToken] -> Either (Int,Int) (PosToken,[PosToken], a) }
 
@@ -87,7 +89,7 @@ parse ::
   Either (Int,Int) Value {- ^ Either (Line,Column) Result -}
 parse bytes =
   do let toks = layoutPass (scanTokens bytes)
-     (_,_,x) <- runParseM layout (error "previous token") toks
+     (_,_,x) <- runParseM value (error "previous token") toks
      return x
 
 instance Functor ParseM where

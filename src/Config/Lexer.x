@@ -7,7 +7,7 @@ module Config.Lexer
 
 import Data.Bits            ((.&.))
 import Data.ByteString.Lazy (ByteString)
-import Data.Char            (isDigit, digitToInt, isSpace)
+import Data.Char            (digitToInt, isSpace)
 import Data.Word            (Word8)
 import Numeric              (readInt)
 import Text.Read            (readMaybe)
@@ -144,12 +144,12 @@ endCommentString = simpleAction $ \_ _ st ->
 -- legal for the given base. This is checked by Alex.
 number ::
   Int        {- ^ prefix length      -} ->
-  Integer    {- ^ base               -} ->
+  Int        {- ^ base               -} ->
   ByteString {- ^ sign-prefix-digits -} ->
   Token
 number prefixLen base str =
-  case readInt base isDigit digitToInt str2 of
-    [(n,"")] -> Number (s*n)
+  case readInt (fromIntegral base) (const True) digitToInt str2 of
+    [(n,"")] -> Number base (s*n)
     _        -> Error
   where
   str2     = drop prefixLen str1
