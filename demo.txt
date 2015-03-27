@@ -17,9 +17,10 @@ layout:
     complicated: no
 
     decimal    : -1234
-    hexadecimal: 0x1234
+    hexadecimal: 0xBEEF
+    hexadecimal: -0xDEAD
     octal      : 0o1234
-    binary     : 0b1010
+    binary     : 0b1100
 
 lists:
    * 1
