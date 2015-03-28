@@ -7,7 +7,8 @@ module Config.Lexer
 
 import Data.Bits            ((.&.))
 import Data.ByteString.Lazy (ByteString)
-import Data.Char            (digitToInt, isSpace)
+import Data.Char            (digitToInt, isSpace, readLitChar)
+import Data.Monoid          ((<>), mempty)
 import Data.Word            (Word8)
 import Numeric              (readInt)
 import Text.Read            (readMaybe)
@@ -16,6 +17,9 @@ import qualified Data.ByteString.Lazy.Char8 as L8
 import qualified Data.Text                  as Text
 import qualified Data.Text.Encoding         as Text
 import qualified Data.Text.Encoding.Error   as Text
+import qualified Data.Text.Lazy             as LText
+import qualified Data.Text.Lazy.Builder     as BText
+import qualified Data.Text.Lazy.Encoding    as LText
 
 import Config.Tokens
 
@@ -29,7 +33,7 @@ $octdigit       = [0-7]
 $hexdigit       = [0-9a-fA-F]
 $bindigit       = [0-1]
 $white_no_nl    = $white # \n
-$charesc        = [abfnrtv\\\"'&]
+$charesc        = [abfnrtv\\\"']
 $cntrl          = [A-Z@\[\\\]\^_]
 
 -- Copied from Haskell 2010
@@ -39,6 +43,7 @@ $cntrl          = [A-Z@\[\\\]\^_]
                 | DLE | DC1 | DC2 | DC3 | DC4 | NAK | SYN | ETB
                 | CAN | EM  | SUB | ESC | FS  | GS  | RS  | US
                 | SP  | DEL
+
 @decimal        = $digit+
 @octal          = $octdigit+
 @binary         = $bindigit+
@@ -48,8 +53,6 @@ $cntrl          = [A-Z@\[\\\]\^_]
                 |   @decimal
                 | o @octal
                 | x @hexadecimal
-
-@string         = ([^ \" \\ \n] | \\ @escape)*
 
 config :-
 
@@ -70,10 +73,18 @@ $white+;
 "-"?      @decimal      { tok (number 0 10)             }
 "-"? "0o" @octal        { tok (number 2  8)             }
 "-"? "0b" @binary       { tok (number 2  2)             }
-\" @string* \"          { tok string                    }
+\"                      { startString                   }
 
 $alpha [$alpha $digit \-]* $white_no_nl* \:
                         { tok section                   }
+}
+
+<stringlit>
+{
+\"                      { endString                     }
+[^ \" \\ \n]+           { addString                     }
+\\ @escape              { addCharLit                    }
+\\ &;
 }
 
 <0,comment> "{-"        { startComment                  }
@@ -100,6 +111,7 @@ $alpha [$alpha $digit \-]* $white_no_nl* \:
 data LexS
   = InNormal
   | InComment CommentType AlexPosn [AlexPosn]
+  | InString AlexPosn BText.Builder
 
 data CommentType = CommentState | StringState
 
@@ -107,6 +119,7 @@ stateToInt :: LexS -> Int
 stateToInt InNormal                     = 0
 stateToInt (InComment CommentState _ _) = comment
 stateToInt (InComment StringState  _ _) = commentstring
+stateToInt (InString _ _              ) = stringlit
 
 --  token starting position -> token bytes -> lexer state -> (new state, token)
 type Action = AlexPosn -> ByteString -> LexS -> (LexS, Maybe PosToken)
@@ -140,6 +153,39 @@ endCommentString = simpleAction $ \_ _ st ->
     InComment _ _ (posn:posns) -> InComment CommentState posn posns
     InComment _ _ []           -> InNormal
 
+-- | Enter the string literal lexer
+startString :: Action
+startString = simpleAction $ \posn _ st ->
+  InString posn mempty
+
+-- | Emit completed string literal, exit string literal lexer and return to
+-- Normal mode.
+endString :: Action
+endString posn _ st =
+  case st of
+    InString startPosn builder ->
+      (InNormal, Just (mkPosToken startPosn (String (LText.toStrict (BText.toLazyText builder)))))
+    _ -> error "endString: Lexer failure"
+
+-- | Add region of text to current string literal state. Escapes are handled
+-- separately.
+addString :: Action
+addString posn str st =
+  case st of
+    InString startPosn builder ->
+      case LText.decodeUtf8' str of
+        Left{}    -> (InString startPosn builder, Just (mkPosToken posn Error))
+        Right txt -> (InString startPosn (builder <> BText.fromLazyText txt), Nothing)
+    _ -> error "addString: Lexer failure"
+
+-- | Handle character escapes in string literal mode
+addCharLit :: Action
+addCharLit = simpleAction $ \_ str st ->
+  case (st, readLitChar (L8.unpack str))of
+    (InString startPosn builder, [(c,"")]) ->
+         InString startPosn (builder <> BText.singleton c)
+    _ -> error "addCharLit: Lexer failure"
+
 -- | Construct a 'Number' token from a token using a
 -- given base. This function expect the token to be
 -- legal for the given base. This is checked by Alex.
@@ -169,16 +215,6 @@ section
   . Text.decodeUtf8With Text.lenientDecode
   . L8.toStrict
 
--- | Parse a string literal processing the escapes.
-string ::
-  ByteString {- ^ UTF-8 encoded text -} ->
-  Token
-string = maybe Error String
-       . readMaybe
-       . Text.unpack
-       . Text.decodeUtf8With Text.lenientDecode
-       . L.toStrict
-
 -- | Attempt to produce a token stream from an input file.
 -- In the case of an error the line and column of the error
 -- are returned instead.
@@ -191,13 +227,16 @@ scanTokens str = go InNormal (alexStartPos,'\n',str)
                 AlexEOF ->
                   case st of
                     InNormal -> [PosToken (alexLine pos) 0 EOF]
-                    InComment _ (AlexPn _ line column) _ -> [PosToken line column Error]
-                AlexError (AlexPn _ line column,_,_) -> [PosToken line column Error]
+                    InComment _ commentPosn _ -> [mkPosToken commentPosn Error]
+                AlexError (errorPosn,_,_)     -> [mkPosToken errorPosn Error]
                 AlexSkip  inp' len     -> go st inp'
                 AlexToken inp' len act ->
                   case act pos (utf8Take len str) st of
                     (st', Nothing) ->     go st' inp'
                     (st', Just x ) -> x : go st' inp'
+
+mkPosToken :: AlexPosn -> Token -> PosToken
+mkPosToken (AlexPn _ line column) token = PosToken line column token
 
 alexLine :: AlexPosn -> Int
 alexLine (AlexPn _ line _) = line
