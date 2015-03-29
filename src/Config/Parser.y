@@ -11,29 +11,29 @@ import qualified Data.ByteString.Lazy.Char8 as L8
 
 import Config.Value   (Section(..), Value(..))
 import Config.Lexer   (scanTokens)
-import Config.Tokens  (PosToken(..), layoutPass)
+import Config.Tokens  (Located(..), Position(..), Token, layoutPass)
 import qualified Config.Tokens as T
 
 }
 
 %token
 
-SECTION                         { PosToken _ _ (T.Section $$)   }
-STRING                          { PosToken _ _ (T.String $$)    }
-NUMBER                          { PosToken _ _ $$@T.Number{}    }
-'yes'                           { PosToken _ _ T.Yes            }
-'no'                            { PosToken _ _ T.No             }
-'*'                             { PosToken _ _ T.Bullet         }
-'['                             { PosToken _ _ T.OpenList       }
-','                             { PosToken _ _ T.Comma          }
-']'                             { PosToken _ _ T.CloseList      }
-'{'                             { PosToken _ _ T.OpenMap        }
-'}'                             { PosToken _ _ T.CloseMap       }
-SEP                             { PosToken _ _ T.LayoutSep      }
-END                             { PosToken _ _ T.LayoutEnd      }
+SECTION                         { Located _ (T.Section $$)      }
+STRING                          { Located _ (T.String $$)       }
+NUMBER                          { Located _ $$@T.Number{}       }
+'yes'                           { Located _ T.Yes               }
+'no'                            { Located _ T.No                }
+'*'                             { Located _ T.Bullet            }
+'['                             { Located _ T.OpenList          }
+','                             { Located _ T.Comma             }
+']'                             { Located _ T.CloseList         }
+'{'                             { Located _ T.OpenMap           }
+'}'                             { Located _ T.CloseMap          }
+SEP                             { Located _ T.LayoutSep         }
+END                             { Located _ T.LayoutEnd         }
 
-%tokentype                      { PosToken                      }
-%lexer { lexerP }               { PosToken _ _ T.EOF            }
+%tokentype                      { Located Token                 }
+%lexer { lexerP }               { Located _ T.EOF               }
 %monad { ParseM }
 %name value value
 
@@ -80,7 +80,7 @@ number (T.Number base val) = Number base val
 number _                   = error "Config.Parser.number: fatal error"
 
 newtype ParseM a = ParseM
-  { runParseM :: PosToken -> [PosToken] -> Either (Int,Int) (PosToken,[PosToken], a) }
+  { runParseM :: Position -> [Located Token] -> Either (Int,Int) (Position,[Located Token], a) }
 
 -- | Parse a configuration value and return the result on the
 -- right, or the position of an error on the left.
@@ -106,14 +106,14 @@ instance Monad ParseM where
                      do (t',ts',x) <- runParseM m t ts
                         runParseM (f x) t' ts'
 
-lexerP :: (PosToken -> ParseM a) -> ParseM a
+lexerP :: (Located Token -> ParseM a) -> ParseM a
 lexerP k = ParseM $ \_ toks ->
   case toks of
     []      -> error "Unexpected end of token stream"
-    t:toks' -> runParseM (k t) t toks'
+    t:toks' -> runParseM (k t) (locPosition t) toks'
 
 -- required by 'happy'
 happyError :: ParseM a
-happyError = ParseM $ \(PosToken line column _) _ -> Left (line,column)
+happyError = ParseM $ \posn _ -> Left (posLine posn, posColumn posn)
 
 }

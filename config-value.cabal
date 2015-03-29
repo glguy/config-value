@@ -25,6 +25,7 @@ library
                        Config.Lens
 
   other-modules:       Config.Lexer,
+                       Config.LexerUtils,
                        Config.Parser,
                        Config.Tokens,
                        Config.Pretty,

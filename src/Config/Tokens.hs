@@ -2,19 +2,27 @@
 -- parser and provides the extra pass to insert layout tokens.
 module Config.Tokens
   ( Token(..)
-  , PosToken(..)
+  , Located(..)
+  , Position(..)
   , layoutPass
   ) where
 
 import Data.Text (Text)
 
--- | A 'PosToken' is a 'Token' annotated with its line and column.
-data PosToken = PosToken
-  { posLine   :: Int
-  , posColumn :: Int
-  , posToken  :: Token
+-- | A position in a text file
+data Position = Position
+  { posLine, posColumn :: !Int }
+  deriving (Read, Show)
+
+-- | A value annotated with its text file position
+data Located a = Located
+  { locPosition :: !Position
+  , locThing    :: !a
   }
-  deriving (Show)
+  deriving (Read, Show)
+
+instance Functor Located where
+  fmap f (Located p x) = Located p (f x)
 
 -- | The token type used by "Config.Lexer" and "Config.Parser"
 data Token
@@ -41,30 +49,29 @@ data Token
 -- | Process a list of position-annotated tokens inserting
 -- layout end tokens as appropriate.
 layoutPass ::
-  [PosToken] {- ^ tokens without layout markers -} ->
-  [PosToken] {- ^ tokens with    layout markers -}
-layoutPass toks = foldr step (\_ -> []) toks [-1]
+  [Located Token] {- ^ tokens without layout markers -} ->
+  [Located Token] {- ^ tokens with    layout markers -}
+layoutPass toks = foldr step (\_ -> []) toks [0]
 
 -- | Single step of the layout pass
-step :: PosToken -> ([Int] -> [PosToken]) -> ([Int] -> [PosToken])
+step :: Located Token -> ([Int] -> [Located Token]) -> ([Int] -> [Located Token])
 
 -- start blocks must be indented
 -- tokens before the current layout end the current layout
+-- note that EOF occurs on column 1 for properly formatted text files
 step t next (col:cols)
-
-  | usesLayout t && posColumn t > col = t : next (posColumn t:col:cols)
-
-  | usesLayout t && posColumn t == col = t{posToken=LayoutSep}
-                                       : t : next (col:cols)
-
-  | posColumn t <= col = t{posToken=LayoutEnd} : step t next cols
+  | tokenCol >  col && usesLayout t = t : next (tokenCol:col:cols)
+  | tokenCol == col && usesLayout t = t{locThing=LayoutSep} : t : next (col:cols)
+  | tokenCol <= col                 = t{locThing=LayoutEnd} : step t next cols
+  where
+  tokenCol = posColumn (locPosition t)
 
 step t next cols = t : next cols
 
 
 -- | Return True when a token starts a layout scope.
-usesLayout :: PosToken -> Bool
+usesLayout :: Located Token -> Bool
 usesLayout t
-  | Section{} <- posToken t = True
-  | Bullet    <- posToken t = True
+  | Section{} <- locThing t = True
+  | Bullet    <- locThing t = True
   | otherwise               = False
