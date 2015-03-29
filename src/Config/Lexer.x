@@ -56,18 +56,18 @@ config :-
 $white+                 ;
 "--" .*                 ;
 
-"{"                     { tok (const OpenMap)           }
-"}"                     { tok (const CloseMap)          }
-"["                     { tok (const OpenList)          }
-","                     { tok (const Comma)             }
-"]"                     { tok (const CloseList)         }
-"*"                     { tok (const Bullet)            }
-"-"? "0x" @hexadecimal  { tok (number 2 16)             }
-"-"?      @decimal      { tok (number 0 10)             }
-"-"? "0o" @octal        { tok (number 2  8)             }
-"-"? "0b" @binary       { tok (number 2  2)             }
-@atom                   { tok Atom                      }
-@atom $white_no_nl* \:  { tok section                   }
+"{"                     { token (const OpenMap)         }
+"}"                     { token (const CloseMap)        }
+"["                     { token (const OpenList)        }
+","                     { token (const Comma)           }
+"]"                     { token (const CloseList)       }
+"*"                     { token (const Bullet)          }
+"-"? "0x" @hexadecimal  { token (number 2 16)           }
+"-"?      @decimal      { token (number 0 10)           }
+"-"? "0o" @octal        { token (number 2  8)           }
+"-"? "0b" @binary       { token (number 2  2)           }
+@atom                   { token Atom                    }
+@atom $white_no_nl* \:  { token section                 }
 \"                      { startString                   }
 }
 
@@ -83,14 +83,14 @@ $white+                 ;
 }
 
 <comment> {
-"-}"                    { endCommentString              }
+"-}"                    { endComment                    }
 \"                      { startCommentString            }
-[^ \" \- \{]+           ;
-[\- \n \{ ]             ;
+.                       ;
+\n                      ;
 }
 
 <commentstring> {
-[ \" \n ]               { endCommentString              }
+[\" \n]                 { endCommentString              }
 \\ \"                   ;
 .                       ;
 }
@@ -109,9 +109,10 @@ scanTokens str = go InNormal (Located alexStartPos str)
     case alexScan inp (stateToInt st) of
       AlexEOF ->
         case st of
-          InNormal                  -> [fmap (const EOF) inp]
-          InComment _ commentPosn _ -> [Located commentPosn Error]
-          InString builder          -> [fmap (const Error) builder]
+          InNormal                    -> [fmap (const EOF) inp]
+          InComment       startPosn _ -> [Located startPosn Error]
+          InCommentString startPosn _ -> [Located startPosn Error]
+          InString        startPosn _ -> [Located startPosn Error]
       AlexError err -> [err { locThing = Error}]
       AlexSkip  inp' len     -> go st inp'
       AlexToken inp' len act ->
@@ -121,9 +122,9 @@ scanTokens str = go InNormal (Located alexStartPos str)
 
 -- | Compute the Alex state corresponding to a particular 'LexerMode'
 stateToInt :: LexerMode -> Int
-stateToInt InNormal{}                   = 0
-stateToInt (InComment CommentState _ _) = comment
-stateToInt (InComment StringState  _ _) = commentstring
-stateToInt InString{}                   = stringlit
+stateToInt InNormal{}           = 0
+stateToInt InComment{}          = comment
+stateToInt InCommentString{}    = commentstring
+stateToInt InString{}           = stringlit
 
 }

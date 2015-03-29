@@ -53,74 +53,72 @@ alexMove (Position line column) c =
 
 data LexerMode
   = InNormal
-  | InComment !CommentType !Position [Position]
-  | InString !(Located Builder)
-
-data CommentType = CommentState | StringState
+  | InComment       !Position !LexerMode -- ^ Start of comment and return mode
+  | InCommentString !Position !LexerMode -- ^ Start of string and return mode
+  | InString        !Position !Builder   -- ^ Start of string and accumulated text
 
 --  token starting position -> token bytes -> lexer state -> (new state, token)
 type Action = Located Text -> LexerMode -> (LexerMode, Maybe (Located Token))
 
 -- Helper function for building an Action given a token constructor
 -- function, a position, and the matched token.
-tok ::
-  (Text -> Token) {- ^ token constructor -} ->
-  Action
-tok f match st = (st, Just (fmap f match))
+token :: (Text -> Token) -> Action
+token f match st = (st, Just (fmap f match))
 
-simpleAction :: (Located Text -> LexerMode -> LexerMode) -> Action
-simpleAction f match st = (f match st, Nothing)
+modeChange :: (Located Text -> LexerMode -> LexerMode) -> Action
+modeChange f match st = (f match st, Nothing)
+
+------------------------------------------------------------------------
+-- Comment state
+------------------------------------------------------------------------
 
 startComment :: Action
-startComment = simpleAction $ \match st ->
-  case st of
-    InNormal                -> InComment CommentState (locPosition match) []
-    InComment _ posn1 posns -> InComment CommentState (locPosition match) (posn1:posns)
-    _                       -> error "startComment: Lexer failure"
+startComment = modeChange (InComment . locPosition)
+
+endComment :: Action
+endComment = modeChange $ \_ (InComment _ st) -> st
+
+------------------------------------------------------------------------
+-- Comment string state
+------------------------------------------------------------------------
 
 startCommentString :: Action
-startCommentString = simpleAction $ \match st ->
-  case st of
-    InComment _ posn1 posns -> InComment StringState (locPosition match) (posn1:posns)
-    _                       -> error "startCommentString: Lexer failure"
+startCommentString = modeChange (InCommentString . locPosition)
 
 endCommentString :: Action
-endCommentString = simpleAction $ \_ st ->
-  case st of
-    InComment _ _ (posn:posns) -> InComment CommentState posn posns
-    InComment _ _ []           -> InNormal
-    _                          -> error "endComment: Lexer failure"
+endCommentString = modeChange $ \_ (InCommentString _ st) -> st
+
+------------------------------------------------------------------------
+-- String state
+------------------------------------------------------------------------
 
 -- | Enter the string literal lexer
 startString :: Action
-startString = simpleAction $ \match _ -> InString (mempty <$ match)
+startString = modeChange $ \match _ -> InString (locPosition match) mempty
 
 -- | Emit completed string literal, exit string literal lexer and return to
 -- Normal mode.
 endString :: Action
-endString _ st =
-  case st of
-    InString builder ->
-      let !t = fmap (LText.toStrict . Builder.toLazyText) builder
-      in (InNormal, Just (fmap String t))
-    _ -> error "endString: Lexer failure"
+endString _ = \(InString posn builder) ->
+   let !t = LText.toStrict (Builder.toLazyText builder)
+   in (InNormal, Just (Located posn (String t)))
 
 -- | Add region of text to current string literal state. Escapes are handled
 -- separately.
 addString :: Action
-addString = simpleAction $ \match st ->
-  case st of
-    InString builder ->
-      InString (fmap (<> Builder.fromText (locThing match)) builder)
-    _ -> error "addString: Lexer failure"
+addString = modeChange $ \match (InString posn builder) ->
+  InString posn (builder <> Builder.fromText (locThing match))
 
 -- | Handle character escapes in string literal mode
 addCharLit :: Action
-addCharLit = simpleAction $ \match st ->
-  case (st, readLitChar (Text.unpack (locThing match))) of
-    (InString builder, [(c,"")]) ->
-         InString (fmap (<> Builder.singleton c) builder)
-    _ -> error "addCharLit: Lexer failure"
+addCharLit = modeChange $ \match (InString posn builder) ->
+  case readLitChar (Text.unpack (locThing match)) of
+    [(c,"")] -> InString posn (builder <> Builder.singleton c)
+    _        -> error "addCharLit: Lexer failure"
+
+------------------------------------------------------------------------
+-- Token builders
+------------------------------------------------------------------------
 
 -- | Construct a 'Number' token from a token using a
 -- given base. This function expect the token to be
