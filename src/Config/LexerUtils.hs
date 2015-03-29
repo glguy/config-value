@@ -6,7 +6,8 @@
 -- causes lots of warnings which mask the interesting warnings.
 module Config.LexerUtils where
 
-import Data.Char            (digitToInt, isSpace, readLitChar)
+import Data.Char            (GeneralCategory(..), generalCategory, digitToInt,
+                             isAscii, isSpace, readLitChar, ord)
 import Data.Monoid          ((<>))
 import Data.Text            (Text)
 import Data.Text.Lazy.Builder (Builder)
@@ -36,7 +37,7 @@ alexGetByte :: AlexInput -> Maybe (Word8,AlexInput)
 alexGetByte (Located p cs)
   = do (c,!cs') <- Text.uncons cs
        let !p' = alexMove p c
-           !b  = fromIntegral (fromEnum c) -- WRONG!
+           !b = byteForChar c
        return (b, Located p' cs')
 
 alexMove :: Position -> Char -> Position
@@ -142,3 +143,45 @@ number prefixLen base str =
 -- | Process a section heading token
 section :: Text -> Token
 section = Section . Text.dropWhileEnd isSpace . Text.init
+
+------------------------------------------------------------------------
+-- Embed all of unicode, kind of, in a single byte!
+------------------------------------------------------------------------
+
+byteForChar :: Char -> Word8
+byteForChar c
+  | c <= '\6' = non_graphic
+  | isAscii c = fromIntegral (ord c)
+  | otherwise = case generalCategory c of
+                  LowercaseLetter       -> lower
+                  OtherLetter           -> lower
+                  UppercaseLetter       -> upper
+                  TitlecaseLetter       -> upper
+                  DecimalNumber         -> digit
+                  OtherNumber           -> digit
+                  ConnectorPunctuation  -> symbol
+                  DashPunctuation       -> symbol
+                  OtherPunctuation      -> symbol
+                  MathSymbol            -> symbol
+                  CurrencySymbol        -> symbol
+                  ModifierSymbol        -> symbol
+                  OtherSymbol           -> symbol
+                  Space                 -> space
+                  ModifierLetter        -> other
+                  NonSpacingMark        -> other
+                  SpacingCombiningMark  -> other
+                  EnclosingMark         -> other
+                  LetterNumber          -> other
+                  OpenPunctuation       -> other
+                  ClosePunctuation      -> other
+                  InitialQuote          -> other
+                  FinalQuote            -> other
+                  _                     -> non_graphic
+  where
+  non_graphic     = 0
+  upper           = 1
+  lower           = 2
+  digit           = 3
+  symbol          = 4
+  space           = 5
+  other           = 6

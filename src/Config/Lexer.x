@@ -12,7 +12,14 @@ import qualified Data.Text as Text
 
 }
 
-$alpha          = [A-Za-z]
+$uniupper       = \x1
+$unilower       = \x2
+$unidigit       = \x3
+$unisymbol      = \x4
+$unispace       = \x5
+$uniother       = \x6
+
+$asciialpha     = [A-Z a-z]
 $digit          = [0-9]
 $octdigit       = [0-7]
 $hexdigit       = [0-9a-fA-F]
@@ -39,6 +46,8 @@ $cntrl          = [A-Z@\[\\\]\^_]
                 | o @octal
                 | x @hexadecimal
 
+@alpha          = $unilower | $uniupper | $asciialpha
+
 config :-
 
 <0> {
@@ -59,7 +68,7 @@ $white+                 ;
 "-"? "0b" @binary       { tok (number 2  2)             }
 \"                      { startString                   }
 
-$alpha [$alpha $digit \-]* $white_no_nl* \:
+@alpha (@alpha | [$digit $unidigit \. _ \-])* $white_no_nl* \:
                         { tok section                   }
 }
 
