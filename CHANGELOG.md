@@ -1,3 +1,7 @@
+0.3
+-----
+* Replace `yes` and `no` with generalized atoms
+
 0.2
 -----
 * Take `Text` as the input to `parse`

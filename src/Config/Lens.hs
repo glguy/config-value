@@ -5,7 +5,7 @@ module Config.Lens
   ( key
   , text
   , number
-  , bool
+  , atom
   , list
   , sections
   ) where
@@ -50,17 +50,18 @@ text :: Applicative f => (Text -> f Text) -> Value -> f Value
 text f (Text t) = Text <$> f t
 text _ v        = pure v
 
+-- | Apply a function to the 'Text' contained inside the given
+-- 'Value' when it is a @Text@. This traversal is only valid
+-- if the output atom is a valid atom!
+atom :: Applicative f => (Text -> f Text) -> Value -> f Value
+atom f (Atom t) = Atom <$> f t
+atom _ v        = pure v
+
 -- | Apply a function to the 'Integer' contained inside the given
 -- 'Value' when it is a @Number@.
 number :: Applicative f => (Integer -> f Integer) -> Value -> f Value
 number f (Number b n) = Number b <$> f n
 number _ v            = pure v
-
--- | Apply a function to the 'Bool' contained inside the given
--- 'Value' when it is a @Bool@.
-bool :: Applicative f => (Bool -> f Bool) -> Value -> f Value
-bool f (Bool b) = Bool <$> f b
-bool _ v        = pure v
 
 -- | Apply a function to the ['Value'] contained inside the given
 -- 'Value' when it is a @List@.

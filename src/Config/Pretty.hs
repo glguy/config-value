@@ -20,7 +20,7 @@ pretty value =
     Sections xs -> prettySections xs
     Number b n  -> prettyNum b n
     Text t      -> prettyText (Text.unpack t)
-    Bool b      -> if b then text "yes" else text "no"
+    Atom t      -> text (Text.unpack t)
     List []     -> text "[]"
     List xs     -> vcat [ char '*' <+> pretty x | x <- xs ]
 

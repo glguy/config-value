@@ -25,6 +25,6 @@ data Value
   = Sections [Section]
   | Number   Int Integer -- ^ base number
   | Text     Text
-  | Bool     Bool
+  | Atom     Text
   | List     [Value]
   deriving (Eq, Read, Show, Typeable, Data, Generic)

@@ -6,9 +6,7 @@ module Config.Parser (parse) where
 
 import Control.Applicative
 import Control.Monad
-import Data.ByteString (ByteString)
 import Data.Text (Text)
-import qualified Data.ByteString.Char8 as B8
 
 import Config.Value   (Section(..), Value(..))
 import Config.Lexer   (scanTokens)
@@ -21,9 +19,8 @@ import qualified Config.Tokens as T
 
 SECTION                         { Located _ (T.Section $$)      }
 STRING                          { Located _ (T.String $$)       }
+ATOM                            { Located _ (T.Atom $$)         }
 NUMBER                          { Located _ $$@T.Number{}       }
-'yes'                           { Located _ T.Yes               }
-'no'                            { Located _ T.No                }
 '*'                             { Located _ T.Bullet            }
 '['                             { Located _ T.OpenList          }
 ','                             { Located _ T.Comma             }
@@ -48,8 +45,7 @@ value ::                        { Value                         }
 simple ::                       { Value                         }
   : NUMBER                      { number $1                     }
   | STRING                      { Text   $1                     }
-  | 'yes'                       { Bool True                     }
-  | 'no'                        { Bool False                    }
+  | ATOM                        { Atom   $1                     }
   | '{' '}'                     { Sections []                   }
   | '[' inlinelist ']'          { List     $2                   }
 
@@ -76,7 +72,7 @@ inlinelist1 ::                  { [Value]                       }
 
 {
 
-number :: T.Token -> Value
+number :: Token -> Value
 number (T.Number base val) = Number base val
 number _                   = error "Config.Parser.number: fatal error"
 

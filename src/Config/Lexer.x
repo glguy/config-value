@@ -48,14 +48,14 @@ $cntrl          = [A-Z@\[\\\]\^_]
 
 @alpha          = $unilower | $uniupper | $asciialpha
 
+@atom           = @alpha (@alpha | [$digit $unidigit \. _ \-])*
+
 config :-
 
 <0> {
 $white+                 ;
 "--" .*                 ;
 
-[Yy][Ee][Ss]            { tok (const Yes)               }
-[Nn][Oo]                { tok (const No)                }
 "{"                     { tok (const OpenMap)           }
 "}"                     { tok (const CloseMap)          }
 "["                     { tok (const OpenList)          }
@@ -66,10 +66,9 @@ $white+                 ;
 "-"?      @decimal      { tok (number 0 10)             }
 "-"? "0o" @octal        { tok (number 2  8)             }
 "-"? "0b" @binary       { tok (number 2  2)             }
+@atom                   { tok Atom                      }
+@atom $white_no_nl* \:  { tok section                   }
 \"                      { startString                   }
-
-@alpha (@alpha | [$digit $unidigit \. _ \-])* $white_no_nl* \:
-                        { tok section                   }
 }
 
 <stringlit> {

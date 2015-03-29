@@ -28,6 +28,7 @@ instance Functor Located where
 data Token
   = Section Text
   | String Text
+  | Atom Text
   | Bullet
   | Comma
   | Number Int Integer
@@ -35,8 +36,6 @@ data Token
   | CloseList
   | OpenMap
   | CloseMap
-  | Yes
-  | No
 
   | Error
 
@@ -54,7 +53,11 @@ layoutPass ::
 layoutPass toks = foldr step (\_ -> []) toks [0]
 
 -- | Single step of the layout pass
-step :: Located Token -> ([Int] -> [Located Token]) -> ([Int] -> [Located Token])
+step ::
+  Located Token              {- ^ current token          -} ->
+  ([Int] -> [Located Token]) {- ^ continuation           -} ->
+  [Int]                      {- ^ stack of layout scopes -} ->
+  [Located Token]            {- ^ token stream with layout -}
 
 -- start blocks must be indented
 -- tokens before the current layout end the current layout
