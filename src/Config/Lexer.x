@@ -7,7 +7,8 @@ module Config.Lexer
 
 import Config.LexerUtils
 import Config.Tokens
-import Data.ByteString.Lazy (ByteString)
+import Data.Text (Text)
+import qualified Data.Text as Text
 
 }
 
@@ -92,7 +93,7 @@ $alpha [$alpha $digit \-]* $white_no_nl* \:
 -- In the case of an error the line and column of the error
 -- are returned instead.
 scanTokens ::
-  ByteString      {- ^ UTF-8 encoded source -} ->
+  Text            {- ^ Source text          -} ->
   [Located Token] {- ^ Tokens with position -}
 scanTokens str = go InNormal (Located alexStartPos str)
   where
@@ -106,7 +107,7 @@ scanTokens str = go InNormal (Located alexStartPos str)
       AlexError err -> [err { locThing = Error}]
       AlexSkip  inp' len     -> go st inp'
       AlexToken inp' len act ->
-        case act (fmap (utf8Take len) inp) st of
+        case act (fmap (Text.take len) inp) st of
           (st', Nothing) ->     go st' inp'
           (st', Just x ) -> x : go st' inp'
 

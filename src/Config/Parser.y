@@ -6,8 +6,9 @@ module Config.Parser (parse) where
 
 import Control.Applicative
 import Control.Monad
-import Data.ByteString.Lazy (ByteString)
-import qualified Data.ByteString.Lazy.Char8 as L8
+import Data.ByteString (ByteString)
+import Data.Text (Text)
+import qualified Data.ByteString.Char8 as B8
 
 import Config.Value   (Section(..), Value(..))
 import Config.Lexer   (scanTokens)
@@ -85,11 +86,12 @@ newtype ParseM a = ParseM
 -- | Parse a configuration value and return the result on the
 -- right, or the position of an error on the left.
 parse ::
-  ByteString             {- ^ UTF-8 encoded source        -} ->
+  Text                   {- ^ Source                      -} ->
   Either (Int,Int) Value {- ^ Either (Line,Column) Result -}
-parse bytes =
-  do let toks = layoutPass (scanTokens bytes)
-     (_,_,x) <- runParseM value (error "previous token") toks
+parse txt =
+  do (_,_,x) <- runParseM value (error "previous token")
+              $ layoutPass
+              $ scanTokens txt
      return x
 
 instance Functor ParseM where

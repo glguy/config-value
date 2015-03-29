@@ -1,3 +1,7 @@
+0.2
+-----
+* Take `Text` as the input to `parse`
+
 0.1.1
 -----
 * Added `Config.Lens` module
