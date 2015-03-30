@@ -37,7 +37,12 @@ data Token
   | OpenMap
   | CloseMap
 
-  | Error
+  | ErrorUntermComment
+  | ErrorUntermCommentString
+  | ErrorUntermString Text
+  | ErrorUntermFile
+  | ErrorEscape Text
+  | ErrorChar Char
 
   -- "Virtual" tokens used by the subsequent layout processor
   | LayoutSep

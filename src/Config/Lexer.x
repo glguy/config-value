@@ -76,6 +76,8 @@ $white+                 ;
 [^ \" \\ ]+             { addString                     }
 \\ @escape              { addCharLit                    }
 \\ &                    ;
+\\ .                    { badEscape                     }
+\n                      { untermString                  }
 }
 
 <0,comment> {
@@ -90,7 +92,8 @@ $white+                 ;
 }
 
 <commentstring> {
-[\" \n]                 { endCommentString              }
+\"                      { endCommentString              }
+\n                      { token (const ErrorUntermCommentString) }
 \\ \"                   ;
 .                       ;
 }
@@ -109,14 +112,12 @@ scanTokens str = go InNormal (Located alexStartPos str)
     case alexScan inp (stateToInt st) of
       AlexEOF ->
         case st of
-          InComment       startPosn _    -> [Located startPosn Error]
-          InCommentString startPosn _    -> [Located startPosn Error]
-          InString        startPosn _    -> [Located startPosn Error]
-          InNormal | posColumn posn == 1 -> [Located posn{posColumn=0} EOF]
-                   | otherwise           -> [Located posn Error]
-            where
-            posn = locPosition inp
-      AlexError err -> [err { locThing = Error}]
+          _ | posColumn (locPosition inp) /= 1 -> [Located (locPosition inp) ErrorUntermFile]
+          InComment       startPosn _    -> [Located startPosn ErrorUntermComment]
+          InCommentString startPosn _    -> [Located startPosn ErrorUntermCommentString]
+          InString        startPosn b    -> [Located startPosn (ErrorUntermString (getStringLit b))]
+          InNormal                       -> [Located (locPosition inp){posColumn=0} EOF]
+      AlexError err -> [fmap (ErrorChar . Text.head) err]
       AlexSkip  inp' len     -> go st inp'
       AlexToken inp' len act ->
         case act (fmap (Text.take len) inp) st of

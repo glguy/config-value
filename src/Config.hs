@@ -65,12 +65,12 @@ errorMessage txt posn token
    = show (posLine   posn) ++ ":"
   ++ show (posColumn posn) ++ ": "
   ++ case token of
-       T.Error
-         | posIndex posn >= Text.length txt ->
-             if posColumn posn == 0
-               then "lexical error: unexpected end of input"
-               else "lexical error: missing line terminator"
-         | otherwise -> "lexical error at character " ++ show (Text.index txt (posIndex posn))
+       T.ErrorUntermComment -> "lexical error: unterminated comment"
+       T.ErrorUntermCommentString -> "lexical error: unterminated string in comment"
+       T.ErrorUntermString str -> "lexical error: unterminated string: " ++ show str
+       T.ErrorUntermFile -> "lexical error: unterminated line"
+       T.ErrorEscape c -> "lexical error in string at: " ++ Text.unpack c
+       T.ErrorChar c -> "lexical error at character " ++ show c
        T.Atom atom   -> "parse error: unexpected atom: " ++ Text.unpack atom
        T.String str  -> "parse error: unexpected string: " ++ show (Text.unpack str)
        T.Bullet      -> "parse error: unexpected bullet '*'"

@@ -100,8 +100,11 @@ startString = modeChange $ \match _ -> InString (locPosition match) mempty
 -- Normal mode.
 endString :: Action
 endString _ = \(InString posn builder) ->
-   let !t = LText.toStrict (Builder.toLazyText builder)
+   let !t = getStringLit builder
    in (InNormal, Just (Located posn (String t)))
+
+getStringLit :: Builder -> Text
+getStringLit = LText.toStrict . Builder.toLazyText
 
 -- | Add region of text to current string literal state. Escapes are handled
 -- separately.
@@ -115,6 +118,15 @@ addCharLit = modeChange $ \match (InString posn builder) ->
   case readLitChar (Text.unpack (locThing match)) of
     [(c,"")] -> InString posn (builder <> Builder.singleton c)
     _        -> error "addCharLit: Lexer failure"
+
+-- | Action for an invalid escape sequence
+badEscape :: Action
+badEscape = token $ \str -> ErrorEscape str
+
+-- | Action for unterminated string constant
+untermString :: Action
+untermString _ = \(InString posn builder) ->
+  (InNormal, Just (Located posn (ErrorUntermString (getStringLit builder))))
 
 ------------------------------------------------------------------------
 -- Token builders
@@ -131,7 +143,7 @@ number ::
 number prefixLen base str =
   case readInt (fromIntegral base) (const True) digitToInt str2 of
     [(n,"")] -> Number base (s*n)
-    _        -> Error
+    _        -> error "number: Lexer failure"
   where
   str2     = drop prefixLen str1
   (s,str1) = case Text.unpack str of
