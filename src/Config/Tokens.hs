@@ -11,7 +11,7 @@ import Data.Text (Text)
 
 -- | A position in a text file
 data Position = Position
-  { posLine, posColumn :: !Int }
+  { posIndex, posLine, posColumn :: !Int }
   deriving (Read, Show)
 
 -- | A value annotated with its text file position
@@ -50,7 +50,7 @@ data Token
 layoutPass ::
   [Located Token] {- ^ tokens without layout markers -} ->
   [Located Token] {- ^ tokens with    layout markers -}
-layoutPass toks = foldr step (\_ -> []) toks [0]
+layoutPass toks = foldr step (\_ -> []) toks []
 
 -- | Single step of the layout pass
 step ::
@@ -62,14 +62,15 @@ step ::
 -- start blocks must be indented
 -- tokens before the current layout end the current layout
 -- note that EOF occurs on column 1 for properly formatted text files
-step t next (col:cols)
-  | tokenCol >  col && usesLayout t = t : next (tokenCol:col:cols)
-  | tokenCol == col && usesLayout t = t{locThing=LayoutSep} : t : next (col:cols)
-  | tokenCol <= col                 = t{locThing=LayoutEnd} : step t next cols
-  where
-  tokenCol = posColumn (locPosition t)
+step t next cols =
+  case cols of
+    col:_     | toCol t == col -> t{locThing=LayoutSep} : t : next cols
+    col:cols' | toCol t <= col -> t{locThing=LayoutEnd} : step t next cols'
+    _         | usesLayout t   -> t : next (toCol t : cols)
+    _                          -> t : next cols
 
-step t next cols = t : next cols
+toCol :: Located a -> Int
+toCol = posColumn . locPosition
 
 
 -- | Return True when a token starts a layout scope.

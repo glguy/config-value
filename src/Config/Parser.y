@@ -77,13 +77,14 @@ number (T.Number base val) = Number base val
 number _                   = error "Config.Parser.number: fatal error"
 
 newtype ParseM a = ParseM
-  { runParseM :: Position -> [Located Token] -> Either (Int,Int) (Position,[Located Token], a) }
+  { runParseM :: Position -> [Located Token] -> Either (Int,Int,Int) (Position,[Located Token], a) }
 
--- | Parse a configuration value and return the result on the
+-- | Parse a configuration file and return the result on the
 -- right, or the position of an error on the left.
+-- Note: Text file lines are terminated by new-lines.
 parse ::
   Text                   {- ^ Source                      -} ->
-  Either (Int,Int) Value {- ^ Either (Line,Column) Result -}
+  Either (Int,Int,Int) Value {- ^ Either (Position,Line,Column) Result -}
 parse txt =
   do (_,_,x) <- runParseM value (error "previous token")
               $ layoutPass
@@ -112,6 +113,6 @@ lexerP k = ParseM $ \_ toks ->
 
 -- required by 'happy'
 happyError :: ParseM a
-happyError = ParseM $ \posn _ -> Left (posLine posn, posColumn posn)
+happyError = ParseM $ \posn _ -> Left (posIndex posn, posLine posn, posColumn posn)
 
 }

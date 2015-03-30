@@ -31,7 +31,7 @@ import Config.Tokens
 type AlexInput = Located Text
 
 alexStartPos :: Position
-alexStartPos = Position { posLine = 1, posColumn = 1 }
+alexStartPos = Position { posIndex = 0, posLine = 1, posColumn = 1 }
 
 alexGetByte :: AlexInput -> Maybe (Word8,AlexInput)
 alexGetByte (Located p cs)
@@ -41,11 +41,11 @@ alexGetByte (Located p cs)
        return (b, Located p' cs')
 
 alexMove :: Position -> Char -> Position
-alexMove (Position line column) c =
+alexMove (Position ix line column) c =
   case c of
-    '\t' -> Position line (((column + 7) `div` 8) * 8 + 1)
-    '\n' -> Position (line + 1) 1
-    _    -> Position line (column + 1)
+    '\t' -> Position (ix + 1) line (((column + 7) `div` 8) * 8 + 1)
+    '\n' -> Position (ix + 1) (line + 1) 1
+    _    -> Position (ix + 1) line (column + 1)
 
 ------------------------------------------------------------------------
 -- Lexer Modes

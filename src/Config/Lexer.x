@@ -109,10 +109,13 @@ scanTokens str = go InNormal (Located alexStartPos str)
     case alexScan inp (stateToInt st) of
       AlexEOF ->
         case st of
-          InNormal                    -> [fmap (const EOF) inp]
-          InComment       startPosn _ -> [Located startPosn Error]
-          InCommentString startPosn _ -> [Located startPosn Error]
-          InString        startPosn _ -> [Located startPosn Error]
+          InComment       startPosn _    -> [Located startPosn Error]
+          InCommentString startPosn _    -> [Located startPosn Error]
+          InString        startPosn _    -> [Located startPosn Error]
+          InNormal | posColumn posn == 1 -> [Located posn{posColumn=0} EOF]
+                   | otherwise           -> [Located posn Error]
+            where
+            posn = locPosition inp
       AlexError err -> [err { locThing = Error}]
       AlexSkip  inp' len     -> go st inp'
       AlexToken inp' len act ->
