@@ -1,6 +1,8 @@
 0.3
 -----
 * Replace `yes` and `no` with generalized atoms
+* Add character index to error position
+* Add human readable error messages
 
 0.2
 -----

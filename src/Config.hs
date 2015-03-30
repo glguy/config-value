@@ -37,6 +37,53 @@ module Config
   , pretty
   ) where
 
-import Config.Value
-import Config.Parser
-import Config.Pretty
+import Config.Value  (Value(..), Section(..))
+import Config.Parser (parseValue)
+import Config.Pretty (pretty)
+import Config.Lexer  (scanTokens)
+import Config.Tokens (Position(..), Located(..), layoutPass, Token)
+import qualified Config.Tokens as T
+
+import Numeric (showIntAtBase)
+import Data.Char (showLitChar, intToDigit)
+import Data.Text (Text)
+import qualified Data.Text as Text
+
+-- | Parse a configuration file and return the result on the
+-- right, or the position of an error on the left.
+-- Note: Text file lines are terminated by new-lines.
+parse ::
+  Text                {- ^ Source                      -} ->
+  Either String Value {- ^ Either ErrorMessage Result -}
+parse txt =
+  case parseValue (layoutPass (scanTokens txt)) of
+    Right x -> Right x
+    Left (Located posn token) -> Left (errorMessage txt posn token)
+
+errorMessage :: Text -> Position -> Token -> String
+errorMessage txt posn token
+   = show (posLine   posn) ++ ":"
+  ++ show (posColumn posn) ++ ": "
+  ++ case token of
+       T.Error
+         | posIndex posn >= Text.length txt ->
+             if posColumn posn == 0
+               then "lexical error: unexpected end of input"
+               else "lexical error: missing line terminator"
+         | otherwise -> "lexical error at character " ++ show (Text.index txt (posIndex posn))
+       T.Atom atom   -> "parse error: unexpected atom: " ++ Text.unpack atom
+       T.String str  -> "parse error: unexpected string: " ++ show (Text.unpack str)
+       T.Bullet      -> "parse error: unexpected bullet '*'"
+       T.Comma       -> "parse error: unexpected comma ','"
+       T.Section s   -> "parse error: unexpected section: " ++ Text.unpack s
+       T.Number 2  n -> "parse error: unexpected number: 0b" ++ showIntAtBase 2  intToDigit n ""
+       T.Number 8  n -> "parse error: unexpected number: 0o" ++ showIntAtBase 8  intToDigit n ""
+       T.Number 16 n -> "parse error: unexpected number: 0x" ++ showIntAtBase 16 intToDigit n ""
+       T.Number _  n -> "parse error: unexpected number: "   ++ showIntAtBase 10 intToDigit n ""
+       T.OpenList    -> "parse error: unexpected start of list '['"
+       T.CloseList   -> "parse error: unexpected end of list ']'"
+       T.OpenMap     -> "parse error: unexpected start of section '{'"
+       T.CloseMap    -> "parse error: unexpected end of section '}'"
+       T.LayoutSep   -> "parse error: unexpected end of block"
+       T.LayoutEnd   -> "parse error: unexpected end of block"
+       T.EOF         -> "parse error: unexpected end of file"

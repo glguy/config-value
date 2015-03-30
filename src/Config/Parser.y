@@ -2,15 +2,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE Trustworthy #-}
 
-module Config.Parser (parse) where
+module Config.Parser (parseValue) where
 
 import Control.Applicative
 import Control.Monad
-import Data.Text (Text)
 
 import Config.Value   (Section(..), Value(..))
-import Config.Lexer   (scanTokens)
-import Config.Tokens  (Located(..), Position(..), Token, layoutPass)
+import Config.Tokens  (Located(..), Token)
 import qualified Config.Tokens as T
 
 }
@@ -77,19 +75,7 @@ number (T.Number base val) = Number base val
 number _                   = error "Config.Parser.number: fatal error"
 
 newtype ParseM a = ParseM
-  { runParseM :: Position -> [Located Token] -> Either (Int,Int,Int) (Position,[Located Token], a) }
-
--- | Parse a configuration file and return the result on the
--- right, or the position of an error on the left.
--- Note: Text file lines are terminated by new-lines.
-parse ::
-  Text                   {- ^ Source                      -} ->
-  Either (Int,Int,Int) Value {- ^ Either (Position,Line,Column) Result -}
-parse txt =
-  do (_,_,x) <- runParseM value (error "previous token")
-              $ layoutPass
-              $ scanTokens txt
-     return x
+  { runParseM :: Located Token -> [Located Token] -> Either (Located Token) (Located Token,[Located Token], a) }
 
 instance Functor ParseM where
   fmap          = liftM
@@ -109,10 +95,19 @@ lexerP :: (Located Token -> ParseM a) -> ParseM a
 lexerP k = ParseM $ \_ toks ->
   case toks of
     []      -> error "Unexpected end of token stream"
-    t:toks' -> runParseM (k t) (locPosition t) toks'
+    t:toks' -> runParseM (k t) t toks'
 
 -- required by 'happy'
 happyError :: ParseM a
-happyError = ParseM $ \posn _ -> Left (posIndex posn, posLine posn, posColumn posn)
+happyError = ParseM $ \prev _ -> Left prev
+
+-- | Attempt to parse a layout annotated token stream or
+-- the token that caused the parse to fail.
+parseValue ::
+  [Located Token]              {- ^ layout annotated token stream -} ->
+  Either (Located Token) Value {- ^ token at failure or result -}
+parseValue tokens =
+  do (_,_,x) <- runParseM value (error "previous token") tokens
+     return x
 
 }
