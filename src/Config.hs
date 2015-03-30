@@ -12,8 +12,13 @@
 --     sections:
 --      "glguy"
 --
---     booleans   : yes
---     complicated: no
+--     {- Block comments
+--        {- nested comments -}
+--        "O'caml style {- strings in comments"
+--        so you can comment out otherwise valid
+--        portions of your config
+--     -}
+--     atoms      : yes
 --
 --     decimal    : -1234
 --     hexadecimal: 0x1234
@@ -21,14 +26,15 @@
 --     binary     : 0b1010
 --
 -- lists:
---    * 1
+--    * sections: in-lists
+--      next-section: still-in-list
 --    * [ "inline", "lists" ]
 --    * * "nestable"
 --      * "layout"
 --      * "lists"
 --    * 3
 --
--- unicode : "standard Haskell format strings (1 ≤ 2)\\x2228(2 ≤ 3)"
+-- unicode : "standard Haskell format strings (1 ≤ 2)\x2228(2 ≤ 3)"
 -- @
 module Config
   ( Section(..)

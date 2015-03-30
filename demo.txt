@@ -13,22 +13,20 @@ layout:
        so you can comment out otherwise valid
        portions of your config
     -}
-    booleans   : yes
-    complicated: no
+    atoms      : yes
 
     decimal    : -1234
-    complicated: addition: {}
-    hexadecimal: 0xBEEF
-    hexadecimal: -0xDEAD
+    hexadecimal: 0x1234
     octal      : 0o1234
-    binary     : 0b1100
+    binary     : 0b1010
 
 lists:
-   * 1
+   * sections: in-lists
+     next-section: still-in-list
    * [ "inline", "lists" ]
    * * "nestable"
      * "layout"
      * "lists"
    * 3
 
-unicode : "standard \0\&0 \"Haskell format\" strings (1 ≤ 2)\x2228(2 ≤ 3)"
+unicode : "standard Haskell format strings (1 ≤ 2)x2228(2 ≤ 3)"
