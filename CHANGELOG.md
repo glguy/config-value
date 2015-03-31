@@ -1,3 +1,7 @@
+0.4
+----
+* Make `Atom` a newtype to help distinguish it from `Text`
+
 0.3
 -----
 * Replace `yes` and `no` with generalized atoms

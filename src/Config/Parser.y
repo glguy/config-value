@@ -3,7 +3,7 @@
 
 module Config.Parser (parseValue) where
 
-import Config.Value   (Section(..), Value(..))
+import Config.Value   (Section(..), Value(..), Atom(..))
 import Config.ParserUtils (Parser, runParser, lexerP, errorP)
 import Config.Tokens  (Located(..), Token)
 import qualified Config.Tokens as T
@@ -41,7 +41,7 @@ value ::                        { Value                         }
 simple ::                       { Value                         }
   : NUMBER                      { number $1                     }
   | STRING                      { Text   $1                     }
-  | ATOM                        { Atom   $1                     }
+  | ATOM                        { Atom (MkAtom $1)              }
   | '{' '}'                     { Sections []                   }
   | '[' inlinelist ']'          { List     $2                   }
 

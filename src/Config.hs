@@ -39,11 +39,12 @@
 module Config
   ( Section(..)
   , Value(..)
+  , Atom(..)
   , parse
   , pretty
   ) where
 
-import Config.Value  (Value(..), Section(..))
+import Config.Value  (Atom(..), Value(..), Section(..))
 import Config.Parser (parseValue)
 import Config.Pretty (pretty)
 import Config.Lexer  (scanTokens)

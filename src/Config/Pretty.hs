@@ -20,7 +20,7 @@ pretty value =
     Sections xs -> prettySections xs
     Number b n  -> prettyNum b n
     Text t      -> prettyText (Text.unpack t)
-    Atom t      -> text (Text.unpack t)
+    Atom t      -> text (Text.unpack (atomName t))
     List []     -> text "[]"
     List xs     -> vcat [ char '*' <+> pretty x | x <- xs ]
 

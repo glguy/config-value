@@ -10,7 +10,7 @@ module Config.Lens
   , sections
   ) where
 
-import Config
+import Config.Value
 
 import Data.Text
 
@@ -53,7 +53,7 @@ text _ v        = pure v
 -- | Apply a function to the 'Text' contained inside the given
 -- 'Value' when it is a @Text@. This traversal is only valid
 -- if the output atom is a valid atom!
-atom :: Applicative f => (Text -> f Text) -> Value -> f Value
+atom :: Applicative f => (Atom -> f Atom) -> Value -> f Value
 atom f (Atom t) = Atom <$> f t
 atom _ v        = pure v
 
