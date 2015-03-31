@@ -7,6 +7,7 @@ module Config.Lens
   , number
   , atom
   , list
+  , values
   , sections
   ) where
 
@@ -68,3 +69,10 @@ number _ v            = pure v
 list :: Applicative f => ([Value] -> f [Value]) -> Value -> f Value
 list f (List xs) = List <$> f xs
 list _ v         = pure v
+
+-- | Apply a function to the 'Value' elements inside the given
+-- 'Value' when it is a @List@.
+--
+-- > values = list . traverse
+values :: Applicative f => (Value -> f Value) -> Value -> f Value
+values = list . traverse

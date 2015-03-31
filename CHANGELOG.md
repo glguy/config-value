@@ -1,6 +1,7 @@
 0.4
 ----
 * Make `Atom` a newtype to help distinguish it from `Text`
+* Add `values` traversal for traversing individual elements of a list
 
 0.3
 -----
