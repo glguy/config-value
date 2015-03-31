@@ -70,7 +70,7 @@ step ::
 step t next cols =
   case cols of
     col:_     | toCol t == col -> t{locThing=LayoutSep} : t : next cols
-    col:cols' | toCol t <= col -> t{locThing=LayoutEnd} : step t next cols'
+    col:cols' | toCol t <  col -> t{locThing=LayoutEnd} : step t next cols'
     _         | usesLayout t   -> t : next (toCol t : cols)
     _                          -> t : next cols
 

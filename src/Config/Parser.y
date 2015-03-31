@@ -1,6 +1,5 @@
 {
 {-# LANGUAGE Trustworthy #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Config.Parser (parseValue) where
 
@@ -8,9 +7,8 @@ import Control.Applicative
 import Control.Monad
 
 import Config.Value   (Section(..), Value(..))
+import Config.ParserUtils (Parser, runParser, lexerP, errorP)
 import Config.Tokens  (Located(..), Token)
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.State.Strict (StateT, evalStateT, get, put)
 import qualified Config.Tokens as T
 
 }
@@ -30,7 +28,7 @@ NUMBER                          { Located _ $$@T.Number{}       }
 SEP                             { Located _ T.LayoutSep         }
 END                             { Located _ T.LayoutEnd         }
 
-%monad { Parser       }
+%monad { Parser (Located Token) }
 %lexer { (>>=) lexerP }         { Located _ T.EOF               }
 %error { errorP       }
 
@@ -39,8 +37,8 @@ END                             { Located _ T.LayoutEnd         }
 %%
 
 value ::                        { Value                         }
-  : sections END                { Sections (reverse $1)         }
-  | list     END                { List     (reverse $1)         }
+  : sections                    { Sections $1                   }
+  | list                        { List     $1                   }
   | simple                      { $1                            }
 
 simple ::                       { Value                         }
@@ -51,23 +49,23 @@ simple ::                       { Value                         }
   | '[' inlinelist ']'          { List     $2                   }
 
 sections ::                     { [Section]                     }
-  :              section        { [$1]                          }
-  | sections SEP section        { $3 : $1                       }
+  : section END                 { [$1]                          }
+  | section SEP sections        { $1 : $3                       }
 
 section ::                      { Section                       }
   : SECTION value               { Section $1 $2                 }
 
 list ::                         { [Value]                       }
-  :          '*' value          { [$2]                          }
-  | list SEP '*' value          { $4 : $1                       }
+  : '*' value END               { [$2]                          }
+  | '*' value SEP list          { $2 : $4                       }
 
 inlinelist ::                   { [Value]                       }
   :                             { []                            }
-  | inlinelist1                 { reverse $1                    }
+  | inlinelist1                 { $1                            }
 
 inlinelist1 ::                  { [Value]                       }
-  :                 simple      { [$1]                          }
-  | inlinelist1 ',' simple      { $3 : $1                       }
+  : simple                      { [$1]                          }
+  | simple ',' inlinelist1      { $1 : $3                       }
 
 {
 
@@ -83,24 +81,5 @@ parseValue ::
   [Located Token]              {- ^ layout annotated token stream -} ->
   Either (Located Token) Value {- ^ token at failure or result -}
 parseValue = runParser value
-
-------------------------------------------------------------------------
--- Parser monad implementation
-------------------------------------------------------------------------
-
-newtype Parser a = Parser (StateT [Located Token] (Either (Located Token)) a)
-  deriving (Functor, Applicative, Monad)
-
-runParser :: Parser a -> [Located Token] -> Either (Located Token) a
-runParser (Parser m) = evalStateT m
-
-lexerP :: Parser (Located Token)
-lexerP = Parser $
-  do x:xs <- get
-     put xs
-     return x
-
-errorP :: Located Token -> Parser a
-errorP = Parser . lift . Left
 
 }
