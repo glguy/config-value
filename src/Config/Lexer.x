@@ -62,13 +62,14 @@ $white+                 ;
 ","                     { token (const Comma)           }
 "]"                     { token (const CloseList)       }
 "*"                     { token (const Bullet)          }
-"-"? "0x" @hexadecimal  { token (number 2 16)           }
-"-"?      @decimal      { token (number 0 10)           }
-"-"? "0o" @octal        { token (number 2  8)           }
-"-"? "0b" @binary       { token (number 2  2)           }
+"-"? 0 [Xx] @hexadecimal{ token (number 2 16)           }
+"-"?        @decimal    { token (number 0 10)           }
+"-"? 0 [Oo] @octal      { token (number 2  8)           }
+"-"? 0 [Bb] @binary     { token (number 2  2)           }
 @atom                   { token Atom                    }
 @atom $white_no_nl* \:  { token section                 }
 \"                      { startString                   }
+
 }
 
 <stringlit> {
