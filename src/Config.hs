@@ -51,7 +51,7 @@ import Config.Tokens (Position(..), Located(..), layoutPass, Token)
 import qualified Config.Tokens as T
 
 import Numeric (showIntAtBase)
-import Data.Char (showLitChar, intToDigit)
+import Data.Char (intToDigit)
 import Data.Text (Text)
 import qualified Data.Text as Text
 
@@ -64,10 +64,10 @@ parse ::
 parse txt =
   case parseValue (layoutPass (scanTokens txt)) of
     Right x -> Right x
-    Left (Located posn token) -> Left (errorMessage txt posn token)
+    Left (Located posn token) -> Left (errorMessage posn token)
 
-errorMessage :: Text -> Position -> Token -> String
-errorMessage txt posn token
+errorMessage :: Position -> Token -> String
+errorMessage posn token
    = show (posLine   posn) ++ ":"
   ++ show (posColumn posn) ++ ": "
   ++ case token of

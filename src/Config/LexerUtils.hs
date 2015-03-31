@@ -19,7 +19,6 @@ import qualified Data.Text.Lazy.Builder     as Builder
 
 #if !MIN_VERSION_base(4,8,0)
 import Data.Monoid (mempty)
-import Data.Functor ((<$))
 #endif
 
 import Config.Tokens

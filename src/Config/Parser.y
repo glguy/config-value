@@ -3,9 +3,6 @@
 
 module Config.Parser (parseValue) where
 
-import Control.Applicative
-import Control.Monad
-
 import Config.Value   (Section(..), Value(..))
 import Config.ParserUtils (Parser, runParser, lexerP, errorP)
 import Config.Tokens  (Located(..), Token)

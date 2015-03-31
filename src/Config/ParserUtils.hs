@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
@@ -10,6 +11,10 @@ module Config.ParserUtils
 
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State.Strict (StateT, evalStateT, get, put)
+
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative
+#endif
 
 ------------------------------------------------------------------------
 -- Parser monad implementation
