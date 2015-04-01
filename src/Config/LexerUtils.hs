@@ -18,6 +18,7 @@ import qualified Data.Text.Lazy             as LText
 import qualified Data.Text.Lazy.Builder     as Builder
 
 #if !MIN_VERSION_base(4,8,0)
+import Data.Functor ((<$))
 import Data.Monoid (mempty)
 #endif
 
@@ -63,6 +64,9 @@ type Action = Located Text -> LexerMode -> (LexerMode, Maybe (Located Token))
 -- function, a position, and the matched token.
 token :: (Text -> Token) -> Action
 token f match st = (st, Just (fmap f match))
+
+token_ :: Token -> Action
+token_ t match st = (st, Just (t <$ match))
 
 modeChange :: (Located Text -> LexerMode -> LexerMode) -> Action
 modeChange f match st = (f match st, Nothing)
@@ -118,14 +122,10 @@ addCharLit = modeChange $ \match (InString posn builder) ->
     [(c,"")] -> InString posn (builder <> Builder.singleton c)
     _        -> error "addCharLit: Lexer failure"
 
--- | Action for an invalid escape sequence
-badEscape :: Action
-badEscape = token $ \str -> ErrorEscape str
-
 -- | Action for unterminated string constant
 untermString :: Action
-untermString _ = \(InString posn builder) ->
-  (InNormal, Just (Located posn (ErrorUntermString (getStringLit builder))))
+untermString _ = \(InString posn _) ->
+  (InNormal, Just (Located posn (Error UntermString)))
 
 ------------------------------------------------------------------------
 -- Token builders

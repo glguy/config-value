@@ -56,12 +56,12 @@ config :-
 $white+                 ;
 "--" .*                 ;
 
-"{"                     { token (const OpenMap)         }
-"}"                     { token (const CloseMap)        }
-"["                     { token (const OpenList)        }
-","                     { token (const Comma)           }
-"]"                     { token (const CloseList)       }
-"*"                     { token (const Bullet)          }
+"{"                     { token_ OpenMap                }
+"}"                     { token_ CloseMap               }
+"["                     { token_ OpenList               }
+","                     { token_ Comma                  }
+"]"                     { token_ CloseList              }
+"*"                     { token_ Bullet                 }
 "-"? 0 [Xx] @hexadecimal{ token (number 2 16)           }
 "-"?        @decimal    { token (number 0 10)           }
 "-"? 0 [Oo] @octal      { token (number 2  8)           }
@@ -77,7 +77,7 @@ $white+                 ;
 [^ \" \\ ]+             { addString                     }
 \\ @escape              { addCharLit                    }
 \\ &                    ;
-\\ .                    { badEscape                     }
+\\ .                    { token (Error . BadEscape)     }
 \n                      { untermString                  }
 }
 
@@ -94,7 +94,7 @@ $white+                 ;
 
 <commentstring> {
 \"                      { endCommentString              }
-\n                      { token (const ErrorUntermCommentString) }
+\n                      { token_ (Error UntermCommentString) }
 \\ \"                   ;
 .                       ;
 }
@@ -113,12 +113,13 @@ scanTokens str = go InNormal (Located alexStartPos str)
     case alexScan inp (stateToInt st) of
       AlexEOF ->
         case st of
-          _ | posColumn (locPosition inp) /= 1 -> [Located (locPosition inp) ErrorUntermFile]
-          InComment       startPosn _    -> [Located startPosn ErrorUntermComment]
-          InCommentString startPosn _    -> [Located startPosn ErrorUntermCommentString]
-          InString        startPosn b    -> [Located startPosn (ErrorUntermString (getStringLit b))]
-          InNormal                       -> [Located (locPosition inp){posColumn=0} EOF]
-      AlexError err -> [fmap (ErrorChar . Text.head) err]
+          _ | let posn = locPosition inp
+            , posColumn posn /= 1 -> [Located posn (Error UntermFile)]
+          InComment       posn _  -> [Located posn (Error UntermComment)]
+          InCommentString posn _  -> [Located posn (Error UntermCommentString)]
+          InString        posn _  -> [Located posn (Error UntermString)]
+          InNormal                -> [Located (locPosition inp){posColumn=0} EOF]
+      AlexError err -> [fmap (Error. NoMatch . Text.head) err]
       AlexSkip  inp' len     -> go st inp'
       AlexToken inp' len act ->
         case act (fmap (Text.take len) inp) st of

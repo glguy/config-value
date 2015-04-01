@@ -4,6 +4,7 @@ module Config.Tokens
   ( Token(..)
   , Located(..)
   , Position(..)
+  , Error(..)
   , layoutPass
   ) where
 
@@ -37,17 +38,21 @@ data Token
   | OpenMap
   | CloseMap
 
-  | ErrorUntermComment
-  | ErrorUntermCommentString
-  | ErrorUntermString Text
-  | ErrorUntermFile
-  | ErrorEscape Text
-  | ErrorChar Char
+  | Error Error
 
   -- "Virtual" tokens used by the subsequent layout processor
   | LayoutSep
   | LayoutEnd
   | EOF
+  deriving (Show)
+
+data Error
+  = UntermComment
+  | UntermCommentString
+  | UntermString
+  | UntermFile
+  | BadEscape Text
+  | NoMatch Char
   deriving (Show)
 
 -- | Process a list of position-annotated tokens inserting

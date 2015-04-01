@@ -48,7 +48,7 @@ import Config.Value  (Atom(..), Value(..), Section(..))
 import Config.Parser (parseValue)
 import Config.Pretty (pretty)
 import Config.Lexer  (scanTokens)
-import Config.Tokens (Position(..), Located(..), layoutPass, Token)
+import Config.Tokens (Error(..), Position(..), Located(..), layoutPass, Token)
 import qualified Config.Tokens as T
 
 import Numeric (showIntAtBase)
@@ -65,19 +65,14 @@ parse ::
 parse txt =
   case parseValue (layoutPass (scanTokens txt)) of
     Right x -> Right x
-    Left (Located posn token) -> Left (errorMessage posn token)
+    Left (Located posn token) -> Left (explain posn token)
 
-errorMessage :: Position -> Token -> String
-errorMessage posn token
+explain :: Position -> Token -> String
+explain posn token
    = show (posLine   posn) ++ ":"
   ++ show (posColumn posn) ++ ": "
   ++ case token of
-       T.ErrorUntermComment -> "lexical error: unterminated comment"
-       T.ErrorUntermCommentString -> "lexical error: unterminated string in comment"
-       T.ErrorUntermString str -> "lexical error: unterminated string: " ++ show str
-       T.ErrorUntermFile -> "lexical error: unterminated line"
-       T.ErrorEscape c -> "lexical error in string at: " ++ Text.unpack c
-       T.ErrorChar c -> "lexical error at character " ++ show c
+       T.Error e     -> explainError e
        T.Atom atom   -> "parse error: unexpected atom: " ++ Text.unpack atom
        T.String str  -> "parse error: unexpected string: " ++ show (Text.unpack str)
        T.Bullet      -> "parse error: unexpected bullet '*'"
@@ -94,3 +89,13 @@ errorMessage posn token
        T.LayoutSep   -> "parse error: unexpected end of block"
        T.LayoutEnd   -> "parse error: unexpected end of block"
        T.EOF         -> "parse error: unexpected end of file"
+
+explainError :: Error -> String
+explainError e =
+  case e of
+    T.UntermComment       -> "lexical error: unterminated comment"
+    T.UntermCommentString -> "lexical error: unterminated string literal in comment"
+    T.UntermString        -> "lexical error: unterminated string literal"
+    T.UntermFile          -> "lexical error: unterminated line"
+    T.BadEscape c         -> "lexical error: bad escape sequence: " ++ Text.unpack c
+    T.NoMatch c           -> "lexical error at character " ++ show c
