@@ -1,3 +1,8 @@
+0.4.0.1
+----
+* Loosen version constraints to build back to GHC 7.4.2
+* Remove unused bytestring dependency
+
 0.4
 ----
 * Make `Atom` a newtype to help distinguish it from `Text`
