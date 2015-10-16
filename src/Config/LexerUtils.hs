@@ -107,8 +107,10 @@ endMode len (Located endPosn match) mode =
     InComment       _ st     -> (st, [])
     InString startPosn input ->
       let n = posIndex endPosn - posIndex startPosn + len
-          t = Text.pack (read (Text.unpack (Text.take n input)))
-      in (InNormal, [Located startPosn (String t)])
+          badEscape = BadEscape (Text.pack "out of range")
+      in case reads (Text.unpack (Text.take n input)) of
+           [(s,"")] -> (InNormal, [Located startPosn (String (Text.pack s))])
+           _        -> (InNormal, [Located startPosn (Error badEscape)])
 
 -- | Action for unterminated string constant
 untermString :: Action
