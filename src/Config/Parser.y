@@ -4,7 +4,6 @@
 module Config.Parser (parseValue) where
 
 import Config.Value   (Section(..), Value(..), Atom(..))
-import Config.ParserUtils (Parser, runParser, lexerP, errorP)
 import Config.Tokens  (Located(..), Token)
 import qualified Config.Tokens as T
 
@@ -24,14 +23,17 @@ NUMBER                          { Located _ $$@T.Number{}       }
 '}'                             { Located _ T.CloseMap          }
 SEP                             { Located _ T.LayoutSep         }
 END                             { Located _ T.LayoutEnd         }
+EOF                             { Located _ T.EOF               }
 
-%monad { Parser (Located Token) }
-%lexer { (>>=) lexerP }         { Located _ T.EOF               }
-%error { errorP       }
+%monad { Either (Located Token) }
+%error { errorP }
 
-%name value
+%name config
 
 %%
+
+config ::                       { Value                         }
+  : value EOF                   { $1                            }
 
 value ::                        { Value                         }
   : sections                    { Sections $1                   }
@@ -72,11 +74,14 @@ inlinelist1 ::                  { [Value]                       }
 number :: Token -> Value
 number = \(T.Number base val) -> Number base val
 
+errorP :: [Located Token] -> Either (Located Token) a
+errorP xs = Left (head xs)
+
 -- | Attempt to parse a layout annotated token stream or
 -- the token that caused the parse to fail.
 parseValue ::
   [Located Token]              {- ^ layout annotated token stream -} ->
   Either (Located Token) Value {- ^ token at failure or result -}
-parseValue = runParser value
+parseValue = config
 
 }

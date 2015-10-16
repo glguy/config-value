@@ -27,7 +27,6 @@ library
   other-modules:       Config.Lexer,
                        Config.LexerUtils,
                        Config.Parser,
-                       Config.ParserUtils,
                        Config.Tokens,
                        Config.Pretty,
                        Config.Value
