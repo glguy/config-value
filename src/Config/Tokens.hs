@@ -12,12 +12,12 @@ import Data.Text (Text)
 
 -- | A position in a text file
 data Position = Position
-  { posIndex, posLine, posColumn :: !Int }
+  { posIndex, posLine, posColumn :: {-# UNPACK #-} !Int }
   deriving (Read, Show)
 
 -- | A value annotated with its text file position
 data Located a = Located
-  { locPosition :: !Position
+  { locPosition :: {-# UNPACK #-} !Position
   , locThing    :: !a
   }
   deriving (Read, Show)

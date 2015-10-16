@@ -45,6 +45,7 @@ $cntrl          = [A-Z@\[\\\]\^_]
                 |   @decimal
                 | o @octal
                 | x @hexadecimal
+                | &
 
 @alpha          = $unilower | $uniupper | $asciialpha
 
@@ -67,23 +68,19 @@ $white+                 ;
 "-"? 0 [Oo] @octal      { token (number 2  8)           }
 "-"? 0 [Bb] @binary     { token (number 2  2)           }
 @atom                   { token Atom                    }
-@atom $white_no_nl* \:  { token section                 }
+@atom $white_no_nl* :   { token section                 }
 \"                      { startString                   }
-
 }
 
 <stringlit> {
 \"                      { endString                     }
-[^ \" \\ ]+             { addString                     }
-\\ @escape              { addCharLit                    }
-\\ &                    ;
-\\ .                    { token (Error . BadEscape)     }
+"\" @escape             ;
+"\" .                   { token (Error . BadEscape)     }
+.                       ;
 \n                      { untermString                  }
 }
 
-<0,comment> {
-"{-"                    { startComment                  }
-}
+<0,comment> "{-"        { startComment                  }
 
 <comment> {
 "-}"                    { endComment                    }
@@ -122,7 +119,7 @@ scanTokens str = go InNormal (Located alexStartPos str)
       AlexError err -> [fmap (Error. NoMatch . Text.head) err]
       AlexSkip  inp' len     -> go st inp'
       AlexToken inp' len act ->
-        case act (fmap (Text.take len) inp) st of
+        case act len inp st of
           (st', Nothing) ->     go st' inp'
           (st', Just x ) -> x : go st' inp'
 

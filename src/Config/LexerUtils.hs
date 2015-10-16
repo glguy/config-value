@@ -10,12 +10,10 @@ import Data.Char            (GeneralCategory(..), generalCategory, digitToInt,
                              isAscii, isSpace, readLitChar, ord)
 import Data.Monoid          ((<>))
 import Data.Text            (Text)
-import Data.Text.Lazy.Builder (Builder)
 import Data.Word            (Word8)
 import Numeric              (readInt)
 import qualified Data.Text                  as Text
 import qualified Data.Text.Lazy             as LText
-import qualified Data.Text.Lazy.Builder     as Builder
 
 #if !MIN_VERSION_base(4,8,0)
 import Data.Functor ((<$))
@@ -55,41 +53,43 @@ data LexerMode
   = InNormal
   | InComment       !Position !LexerMode -- ^ Start of comment and return mode
   | InCommentString !Position !LexerMode -- ^ Start of string and return mode
-  | InString        !Position !Builder   -- ^ Start of string and accumulated text
+  | InString        !Position !Text      -- ^ Start of string and input text
 
---  token starting position -> token bytes -> lexer state -> (new state, token)
-type Action = Located Text -> LexerMode -> (LexerMode, Maybe (Located Token))
+-- match length -> token starting position -> token bytes -> lexer state ->
+-- (new state, token)
+type Action = Int -> Located Text -> LexerMode ->
+              (LexerMode, Maybe (Located Token))
 
 -- Helper function for building an Action given a token constructor
 -- function, a position, and the matched token.
 token :: (Text -> Token) -> Action
-token f match st = (st, Just (fmap f match))
+token f len match st = (st, Just (fmap (f . Text.take len) match))
 
 token_ :: Token -> Action
-token_ t match st = (st, Just (t <$ match))
+token_ = token . const
 
-modeChange :: (Located Text -> LexerMode -> LexerMode) -> Action
-modeChange f match st = (f match st, Nothing)
+modeChange :: (Position -> LexerMode -> LexerMode) -> Action
+modeChange f _ match st = (f (locPosition match) st, Nothing)
 
 ------------------------------------------------------------------------
 -- Comment state
 ------------------------------------------------------------------------
 
 startComment :: Action
-startComment = modeChange (InComment . locPosition)
+startComment = modeChange InComment
 
 endComment :: Action
-endComment = modeChange $ \_ (InComment _ st) -> st
+endComment = modeChange (\_ (InComment _ st) -> st)
 
 ------------------------------------------------------------------------
 -- Comment string state
 ------------------------------------------------------------------------
 
 startCommentString :: Action
-startCommentString = modeChange (InCommentString . locPosition)
+startCommentString = modeChange InCommentString
 
 endCommentString :: Action
-endCommentString = modeChange $ \_ (InCommentString _ st) -> st
+endCommentString = modeChange (\_ (InCommentString _ st) -> st)
 
 ------------------------------------------------------------------------
 -- String state
@@ -97,34 +97,19 @@ endCommentString = modeChange $ \_ (InCommentString _ st) -> st
 
 -- | Enter the string literal lexer
 startString :: Action
-startString = modeChange $ \match _ -> InString (locPosition match) mempty
+startString _ (Located posn text) _ = (InString posn text, Nothing)
 
 -- | Emit completed string literal, exit string literal lexer and return to
 -- Normal mode.
 endString :: Action
-endString _ = \(InString posn builder) ->
-   let !t = getStringLit builder
-   in (InNormal, Just (Located posn (String t)))
-
-getStringLit :: Builder -> Text
-getStringLit = LText.toStrict . Builder.toLazyText
-
--- | Add region of text to current string literal state. Escapes are handled
--- separately.
-addString :: Action
-addString = modeChange $ \match (InString posn builder) ->
-  InString posn (builder <> Builder.fromText (locThing match))
-
--- | Handle character escapes in string literal mode
-addCharLit :: Action
-addCharLit = modeChange $ \match (InString posn builder) ->
-  case readLitChar (Text.unpack (locThing match)) of
-    [(c,"")] -> InString posn (builder <> Builder.singleton c)
-    _        -> error "addCharLit: Lexer failure"
+endString len (Located endPosn match) = \(InString startPosn input) ->
+   let n = posIndex endPosn - posIndex startPosn + len
+       t = Text.pack (read (Text.unpack (Text.take n input)))
+   in (InNormal, Just (Located startPosn (String t)))
 
 -- | Action for unterminated string constant
 untermString :: Action
-untermString _ = \(InString posn _) ->
+untermString _ _ = \(InString posn _) ->
   (InNormal, Just (Located posn (Error UntermString)))
 
 ------------------------------------------------------------------------
