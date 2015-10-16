@@ -46,6 +46,7 @@ data Token
   | EOF
   deriving (Show)
 
+-- | Types of lexical errors
 data Error
   = UntermComment
   | UntermCommentString

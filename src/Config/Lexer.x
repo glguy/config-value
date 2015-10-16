@@ -73,24 +73,24 @@ $white+                 ;
 }
 
 <stringlit> {
-\"                      { endString                     }
+\"                      { endMode                       }
 "\" @escape             ;
 "\" .                   { token (Error . BadEscape)     }
 .                       ;
 \n                      { untermString                  }
 }
 
-<0,comment> "{-"        { startComment                  }
+<0,comment> "{-"        { nestMode InComment            }
 
 <comment> {
-"-}"                    { endComment                    }
-\"                      { startCommentString            }
+"-}"                    { endMode                       }
+\"                      { nestMode InCommentString      }
 .                       ;
 \n                      ;
 }
 
 <commentstring> {
-\"                      { endCommentString              }
+\"                      { endMode                       }
 \n                      { token_ (Error UntermCommentString) }
 \\ \"                   ;
 .                       ;
@@ -104,24 +104,15 @@ $white+                 ;
 scanTokens ::
   Text            {- ^ Source text          -} ->
   [Located Token] {- ^ Tokens with position -}
-scanTokens str = go InNormal (Located alexStartPos str)
+scanTokens str = go (Located startPos str) InNormal
   where
-  go st inp =
+  go inp st =
     case alexScan inp (stateToInt st) of
-      AlexEOF ->
-        case st of
-          _ | let posn = locPosition inp
-            , posColumn posn /= 1 -> [Located posn (Error UntermFile)]
-          InComment       posn _  -> [Located posn (Error UntermComment)]
-          InCommentString posn _  -> [Located posn (Error UntermCommentString)]
-          InString        posn _  -> [Located posn (Error UntermString)]
-          InNormal                -> [Located (locPosition inp){posColumn=0} EOF]
-      AlexError err -> [fmap (Error. NoMatch . Text.head) err]
-      AlexSkip  inp' len     -> go st inp'
-      AlexToken inp' len act ->
-        case act len inp st of
-          (st', Nothing) ->     go st' inp'
-          (st', Just x ) -> x : go st' inp'
+      AlexEOF                -> eofAction (locPosition inp) st
+      AlexError inp'         -> errorAction inp'
+      AlexSkip  inp' _       -> go inp' st
+      AlexToken inp' len act -> case act len inp st of
+                                  (st', xs) -> xs ++ go inp' st'
 
 -- | Compute the Alex state corresponding to a particular 'LexerMode'
 stateToInt :: LexerMode -> Int
