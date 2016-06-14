@@ -2,6 +2,10 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 
+#ifndef MIN_VERSION_base
+#define MIN_VERSION_base(x,y,z) 1
+#endif
+
 -- | This module provides the types used in this package for configuration.
 -- Visit "ConfigFile.Parser" to parse values of this type in a convenient
 -- layout based notation.
