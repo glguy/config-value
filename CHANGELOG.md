@@ -1,3 +1,8 @@
+0.4.0.2
+----
+* Internal lexer and parser improvements
+* Added support for `\&` escape sequence
+
 0.4.0.1
 ----
 * Loosen version constraints to build back to GHC 7.4.2
