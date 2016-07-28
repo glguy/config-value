@@ -11,7 +11,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 homepage:            https://github.com/glguy/config-value
 bug-reports:         https://github.com/glguy/config-value/issues
-description:         This package implments a language similar to YAML or JSON but
+description:         This package implements a language similar to YAML or JSON but
                      with fewer special cases and fewer dependencies. It emphasizes
                      layout structure for sections and lists, and requires quotes
                      around strings.
