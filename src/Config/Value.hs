@@ -50,7 +50,7 @@ instance IsString Atom where
 data Value
   = Sections [Section]
   | Number   Int Integer -- ^ base number
-  | Floating Integer Integer
+  | Floating Integer Integer -- ^ coef exponent: coef * 10 ^ exponent
   | Text     Text
   | Atom     Atom
   | List     [Value]

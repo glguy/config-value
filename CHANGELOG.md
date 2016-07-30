@@ -1,3 +1,7 @@
+0.5
+----
+* Add support for floating-point numbers
+
 0.4.0.2
 ----
 * Internal lexer and parser improvements
