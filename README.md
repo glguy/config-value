@@ -29,6 +29,7 @@ layout:
     hexadecimal: 0x1234
     octal      : 0o1234
     binary     : 0b1010
+    floating   : 12.34e56
 
 lists:
    * sections: in-lists

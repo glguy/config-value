@@ -50,6 +50,7 @@ instance IsString Atom where
 data Value
   = Sections [Section]
   | Number   Int Integer -- ^ base number
+  | Floating Integer Integer
   | Text     Text
   | Atom     Atom
   | List     [Value]

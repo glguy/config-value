@@ -6,7 +6,7 @@
 module Config.LexerUtils where
 
 import Data.Char            (GeneralCategory(..), generalCategory, digitToInt,
-                             isAscii, isSpace, readLitChar, ord)
+                             isAscii, isSpace, readLitChar, ord, isDigit)
 import Data.Monoid          ((<>))
 import Data.Text            (Text)
 import Data.Word            (Word8)
@@ -138,6 +138,26 @@ number prefixLen base str =
   (s,str1) = case Text.unpack str of
                '-':rest -> (-1, rest)
                rest     -> ( 1, rest)
+
+-- | Construct a 'Floating' token from a lexeme.
+floating ::
+  Text {- ^ sign-integer-[. decimal][e exponent] -} ->
+  Token
+floating str = Floating (s * read (x1++x2)) (x3-fromIntegral (length x2))
+
+  where
+  (s,str1) = case Text.unpack str of
+               '-':rest -> (-1, rest)
+               rest     -> ( 1, rest)
+  (x1,str2) = span isDigit str1
+  (x2,str3) = case str2 of
+                '.':xs -> span isDigit xs
+                _ -> ("", str2)
+  x3        = case str3 of
+                []        -> 0
+                _e:'+':xs -> read xs
+                _e:xs     -> read xs
+
 
 -- | Process a section heading token
 section :: Text -> Token

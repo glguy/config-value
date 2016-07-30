@@ -19,6 +19,7 @@ pretty value =
     Sections [] -> text "{}"
     Sections xs -> prettySections xs
     Number b n  -> prettyNum b n
+    Floating c e-> prettyFloating c e
     Text t      -> prettyText (Text.unpack t)
     Atom t      -> text (Text.unpack (atomName t))
     List []     -> text "[]"
@@ -35,7 +36,8 @@ prettyNum b n
   pref = if n < 0 then char '-' else empty
   num  = text (showIntAtBase (fromIntegral b) intToDigit (abs n) "")
 
-
+prettyFloating :: Integer -> Integer -> Doc
+prettyFloating c e = text (show c ++ "e" ++ show e)
 
 prettyText :: String -> Doc
 prettyText = doubleQuotes . cat . snd . mapAccumL ppChar True

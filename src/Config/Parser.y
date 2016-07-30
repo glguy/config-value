@@ -15,6 +15,7 @@ SECTION                         { Located _ (T.Section $$)      }
 STRING                          { Located _ (T.String $$)       }
 ATOM                            { Located _ (T.Atom $$)         }
 NUMBER                          { Located _ $$@T.Number{}       }
+FLOATING                        { Located _ $$@T.Floating{}     }
 '*'                             { Located _ T.Bullet            }
 '['                             { Located _ T.OpenList          }
 ','                             { Located _ T.Comma             }
@@ -42,6 +43,7 @@ value ::                        { Value                         }
 
 simple ::                       { Value                         }
   : NUMBER                      { number $1                     }
+  | FLOATING                    { floating $1                   }
   | STRING                      { Text   $1                     }
   | ATOM                        { Atom (MkAtom $1)              }
   | '{' '}'                     { Sections []                   }
@@ -73,6 +75,12 @@ inlinelist1 ::                  { [Value]                       }
 -- the constructor.
 number :: Token -> Value
 number = \(T.Number base val) -> Number base val
+
+-- | Convert floating token to floating value. This needs a custom
+-- function like this because there are two value matched from
+-- the constructor.
+floating :: Token -> Value
+floating = \(T.Floating coef expo) -> Floating coef expo
 
 errorP :: [Located Token] -> Either (Located Token) a
 errorP xs = Left (head xs)

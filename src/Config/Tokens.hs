@@ -33,6 +33,7 @@ data Token
   | Bullet
   | Comma
   | Number Int Integer
+  | Floating Integer Integer
   | OpenList
   | CloseList
   | OpenMap
