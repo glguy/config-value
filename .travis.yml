@@ -28,8 +28,11 @@ matrix:
       compiler: ": #GHC 7.10.3"
       addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.3,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
     - env: CABALVER=1.24 GHCVER=8.0.1
-      compiler: ": #GHC 8.0.1"
-      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.1,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
+      compiler: ": #GHC 8.0.2"
+      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
+    - env: CABALVER=1.24 GHCVER=8.2.1
+      compiler: ": #GHC 8.2.1"
+      addons: {apt: {packages: [cabal-install-1.24,ghc-8.2.1,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
 
 before_install:
  - unset CC
@@ -86,13 +89,4 @@ script:
 # `cabal install --force-reinstalls dist/*-*.tar.gz`
  - SRC_TGZ=$(cabal info . | awk '{print $2;exit}').tar.gz &&
    (cd dist && cabal install --force-reinstalls "$SRC_TGZ")
-
-notifications:
-  irc:
-    channels:
-      - "irc.freenode.org#haskell-irc"
-    skip_join: true
-    use_notice: true
-    template:
-      - "\x0313config-value\x0f/\x0306%{branch}\x0f \x0314%{commit}\x0f %{message} \x0302\x1f%{build_url}\x0f"
 # EOF

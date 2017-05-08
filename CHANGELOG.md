@@ -1,3 +1,9 @@
+0.5.1
+---
+* Allow trailing commas in lists and section lists
+* Support inline section lists using `{}`
+* Add more documentation
+
 0.5
 ----
 * Add support for floating-point numbers
