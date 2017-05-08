@@ -97,7 +97,9 @@ underscore (_), or dash (-).
 
 Section lists can be nested.
 
-The empty sections list is specified with @{}@.
+Section lists can be used inline, without layout, but surrounding them
+with @{@ and @}@ and separating the sections with @,@.  The empty sections
+list is specified with @{}@.
 
 Examples:
 
@@ -107,6 +109,7 @@ key-1 : -- spaces are allowed between the section name and the colon
   key-1.2: [ value-1.2 ]
 key-2: value-2
 key-3: {} -- the value for key-3 is the empty sections list
+key-4: { red: 1, blue: 2} -- inline syntax for sublist
 @
 
 == List
@@ -233,11 +236,17 @@ lines. These comments can be nested.
 
 -}
 module Config
-  ( Section(..)
+  (
+  -- * Parsing
+    parse
+
+  -- * Pretty-printing
+  , pretty
+
+  -- * Types
+  , Section(..)
   , Value(..)
   , Atom(..)
-  , parse
-  , pretty
   ) where
 
 import Config.Value  (Atom(..), Value(..), Section(..))
