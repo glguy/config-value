@@ -27,6 +27,8 @@ $bindigit       = [0-1]
 $white_no_nl    = $white # \n
 $charesc        = [abfnrtv\\\"']
 $cntrl          = [A-Z@\[\\\]\^_]
+$alpha          = [$unilower $uniupper $asciialpha]
+
 
 @decimal        = $digit+
 @octal          = $octdigit+
@@ -47,9 +49,7 @@ $cntrl          = [A-Z@\[\\\]\^_]
                 | x @hexadecimal
                 | &
 
-@alpha          = $unilower | $uniupper | $asciialpha
-
-@atom           = @alpha (@alpha | [$digit $unidigit \. _ \-])*
+@atom           = $alpha [$alpha $digit $unidigit \. _ \-]*
 
 @exponent       = [Ee] [\-\+]? @decimal
 
@@ -80,6 +80,7 @@ $white+                 ;
 <stringlit> {
 \"                      { endMode                       }
 "\" @escape             ;
+"\" \n $white* "\"           ;
 "\" .                   { token (Error . BadEscape)     }
 .                       ;
 \n                      { untermString                  }

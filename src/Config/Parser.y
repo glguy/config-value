@@ -46,12 +46,16 @@ simple ::                       { Value                         }
   | FLOATING                    { floating $1                   }
   | STRING                      { Text   $1                     }
   | ATOM                        { Atom (MkAtom $1)              }
-  | '{' '}'                     { Sections []                   }
-  | '[' inlinelist ']'          { List     $2                   }
+  | '{' inlinesections '}'      { Sections $2                   }
+  | '[' inlinelist ']'          { List (reverse $2)             }
 
 sections ::                     { [Section]                     }
   : section END                 { [$1]                          }
   | section SEP sections        { $1 : $3                       }
+
+inlinesections ::               { [Section]                     }
+  : section                     { [$1]                          }
+  | section ',' inlinesections  { $1 : $3                       }
 
 section ::                      { Section                       }
   : SECTION value               { Section $1 $2                 }
@@ -63,10 +67,11 @@ list ::                         { [Value]                       }
 inlinelist ::                   { [Value]                       }
   :                             { []                            }
   | inlinelist1                 { $1                            }
+  | inlinelist1 ','             { $1                            }
 
 inlinelist1 ::                  { [Value]                       }
   : simple                      { [$1]                          }
-  | simple ',' inlinelist1      { $1 : $3                       }
+  | inlinelist1 ',' simple      { $3 : $1                       }
 
 {
 

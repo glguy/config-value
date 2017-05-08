@@ -24,6 +24,10 @@ import GHC.Generics (Generic)
 #endif
 
 -- | A single section of a 'Value'
+--
+-- Example:
+--
+--    * @my-key: my-value@ is @'Section' ('Atom' "my-key") ('Atom' "my-value")@
 data Section = Section
   { sectionName  :: Text
   , sectionValue :: Value
@@ -35,7 +39,8 @@ data Section = Section
            )
 
 -- | Wrapper to distinguish 'Atom' from 'Text' by
--- type in a configuration.
+-- type in a configuration. Atoms can be constructed
+-- using the @OverloadedStrings@ extension.
 newtype Atom = MkAtom { atomName :: Text }
   deriving (Eq, Ord, Show, Read, Typeable, Data
 #if MIN_VERSION_base(4,6,0)
@@ -47,13 +52,29 @@ instance IsString Atom where
   fromString = MkAtom . fromString
 
 -- | Sum type of the values supported by this language.
+--
+-- The first field of the 'Number' constructor is the based used in the concrete
+-- syntax of the configuration value.
+--
+-- The 'Floating' constructor stores the coefficient and power-of-10 exponent used in
+-- the concrete syntax. This allows representing numbers that would
+-- otherwise overflow a 'Double'.
+--
+-- Examples:
+--
+--    * @0xff@ is @'Number' 16 255@
+--
+--    * @123@  is @'Number' 10 123@
+--
+--    * @123e10@ is @'Floating' 123 10@
+--    * @123.45@ is @'Floating' 12345 (-2)@
 data Value
-  = Sections [Section]
-  | Number   Int Integer -- ^ base number
+  = Sections [Section] -- ^ lists of key-value pairs
+  | Number   Int Integer -- ^ integer literal base (2, 8, 10, or 16) and integer value
   | Floating Integer Integer -- ^ coef exponent: coef * 10 ^ exponent
-  | Text     Text
-  | Atom     Atom
-  | List     [Value]
+  | Text     Text -- ^ quoted strings
+  | Atom     Atom -- ^ unquoted strings
+  | List     [Value] -- ^ lists
   deriving (Eq, Read, Show, Typeable, Data
 #if MIN_VERSION_base(4,6,0)
            , Generic

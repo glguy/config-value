@@ -62,13 +62,15 @@ data Error
 layoutPass ::
   [Located Token] {- ^ tokens without layout markers -} ->
   [Located Token] {- ^ tokens with    layout markers -}
-layoutPass toks = foldr step (\_ -> []) toks []
+layoutPass toks = foldr step (\_ -> []) toks [Layout (-1)]
+
+data Layout = NoLayout | Layout Int
 
 -- | Single step of the layout pass
 step ::
   Located Token              {- ^ current token          -} ->
-  ([Int] -> [Located Token]) {- ^ continuation           -} ->
-  [Int]                      {- ^ stack of layout scopes -} ->
+  ([Layout] -> [Located Token]) {- ^ continuation           -} ->
+  [Layout]                      {- ^ stack of layout scopes -} ->
   [Located Token]            {- ^ token stream with layout -}
 
 -- start blocks must be indented
@@ -76,10 +78,12 @@ step ::
 -- note that EOF occurs on column 1 for properly formatted text files
 step t next cols =
   case cols of
-    col:_     | toCol t == col -> t{locThing=LayoutSep} : t : next cols
-    col:cols' | toCol t <  col -> t{locThing=LayoutEnd} : step t next cols'
-    _         | usesLayout t   -> t : next (toCol t : cols)
-    _                          -> t : next cols
+    NoLayout:cols' | CloseMap <- locThing t -> t : next cols'
+    _              | OpenMap  <- locThing t -> t : next (NoLayout : cols)
+    Layout col:_     | toCol t == col -> t{locThing=LayoutSep} : t : next cols
+    Layout col:cols' | toCol t <  col -> t{locThing=LayoutEnd} : step t next cols'
+    Layout{}:_       | usesLayout t   -> t : next (Layout (toCol t) : cols)
+    _                                 -> t : next cols
 
 toCol :: Located a -> Int
 toCol = posColumn . locPosition
