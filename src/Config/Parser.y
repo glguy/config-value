@@ -37,8 +37,8 @@ config ::                       { Value                         }
   : value EOF                   { $1                            }
 
 value ::                        { Value                         }
-  : sections                    { Sections $1                   }
-  | list                        { List     $1                   }
+  : sections END                { Sections (reverse $1)         }
+  | list     END                { List     (reverse $1)         }
   | simple                      { $1                            }
 
 simple ::                       { Value                         }
@@ -46,23 +46,28 @@ simple ::                       { Value                         }
   | FLOATING                    { floating $1                   }
   | STRING                      { Text   $1                     }
   | ATOM                        { Atom (MkAtom $1)              }
-  | '{' inlinesections '}'      { Sections $2                   }
+  | '{' inlinesections '}'      { Sections (reverse $2)         }
   | '[' inlinelist ']'          { List (reverse $2)             }
 
 sections ::                     { [Section]                     }
-  : section END                 { [$1]                          }
-  | section SEP sections        { $1 : $3                       }
+  :              section        { [$1]                          }
+  | sections SEP section        { $3 : $1                       }
 
 inlinesections ::               { [Section]                     }
-  : section                     { [$1]                          }
-  | section ',' inlinesections  { $1 : $3                       }
+  :                             { []                            }
+  | inlinesections1             { $1                            }
+  | inlinesections1 ','         { $1                            }
+
+inlinesections1 ::              { [Section]                     }
+  :                     section { [$1]                          }
+  | inlinesections1 ',' section { $3 : $1                       }
 
 section ::                      { Section                       }
   : SECTION value               { Section $1 $2                 }
 
 list ::                         { [Value]                       }
-  : '*' value END               { [$2]                          }
-  | '*' value SEP list          { $2 : $4                       }
+  :          '*' value          { [$2]                          }
+  | list SEP '*' value          { $4 : $1                       }
 
 inlinelist ::                   { [Value]                       }
   :                             { []                            }
@@ -70,7 +75,7 @@ inlinelist ::                   { [Value]                       }
   | inlinelist1 ','             { $1                            }
 
 inlinelist1 ::                  { [Value]                       }
-  : simple                      { [$1]                          }
+  :                 simple      { [$1]                          }
   | inlinelist1 ',' simple      { $3 : $1                       }
 
 {
