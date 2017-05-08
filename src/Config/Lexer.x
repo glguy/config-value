@@ -66,12 +66,10 @@ $white+                 ;
 "]"                     { token_ CloseList              }
 "*"                     { token_ Bullet                 }
 "-"? 0 [Xx] @hexadecimal{ token (number 2 16)           }
-"-"?        @decimal    { token (number 0 10)           }
 "-"? 0 [Oo] @octal      { token (number 2  8)           }
 "-"? 0 [Bb] @binary     { token (number 2  2)           }
-"-"? @decimal "." @decimal @exponent { token floating }
-"-"? @decimal "." @decimal { token floating }
-"-"? @decimal @exponent { token floating }
+"-"? @decimal           { token (number 0 10)           }
+"-"? @decimal ("." @decimal)? @exponent? { token floating }
 @atom                   { token Atom                    }
 @atom $white_no_nl* :   { token section                 }
 \"                      { startString                   }
@@ -97,7 +95,7 @@ $white+                 ;
 
 <commentstring> {
 \"                      { endMode                       }
-\n                      { token_ (Error UntermCommentString) }
+\n                      { endMode                       }
 \\ \"                   ;
 .                       ;
 }

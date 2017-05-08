@@ -51,7 +51,7 @@ eofAction eofPosn st =
   case st of
     _ | posColumn eofPosn /= 1 -> [Located eofPosn (Error UntermFile)]
     InComment       posn _     -> [Located posn    (Error UntermComment)]
-    InCommentString posn _     -> [Located posn    (Error UntermCommentString)]
+    InCommentString posn _     -> [Located posn    (Error UntermComment)]
     InString        posn _     -> [Located posn    (Error UntermString)]
     InNormal                   -> [Located eofPosn{posColumn=0} EOF]
 

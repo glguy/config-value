@@ -50,7 +50,6 @@ data Token
 -- | Types of lexical errors
 data Error
   = UntermComment
-  | UntermCommentString
   | UntermString
   | UntermFile
   | BadEscape Text

@@ -290,7 +290,6 @@ explainError :: Error -> String
 explainError e =
   case e of
     T.UntermComment       -> "lexical error: unterminated comment"
-    T.UntermCommentString -> "lexical error: unterminated string literal in comment"
     T.UntermString        -> "lexical error: unterminated string literal"
     T.UntermFile          -> "lexical error: unterminated line"
     T.BadEscape c         -> "lexical error: bad escape sequence: " ++ Text.unpack c
