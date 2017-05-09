@@ -4,23 +4,23 @@
 module Config.Parser (parseValue) where
 
 import Config.Value   (Section(..), Value(..), Atom(..))
-import Config.Tokens  (Located(..), Token)
+import Config.Tokens  (Located(..), Token, Position)
 import qualified Config.Tokens as T
 
 }
 
 %tokentype                      { Located Token                 }
 %token
-SECTION                         { Located _ (T.Section $$)      }
-STRING                          { Located _ (T.String $$)       }
-ATOM                            { Located _ (T.Atom $$)         }
-NUMBER                          { Located _ $$@T.Number{}       }
-FLOATING                        { Located _ $$@T.Floating{}     }
-'*'                             { Located _ T.Bullet            }
-'['                             { Located _ T.OpenList          }
+SECTION                         { Located _ T.Section{}         }
+STRING                          { Located _ T.String{}          }
+ATOM                            { Located _ T.Atom{}            }
+NUMBER                          { Located _ T.Number{}          }
+FLOATING                        { Located _ T.Floating{}        }
+'*'                             { Located $$ T.Bullet            }
+'['                             { Located $$ T.OpenList          }
 ','                             { Located _ T.Comma             }
 ']'                             { Located _ T.CloseList         }
-'{'                             { Located _ T.OpenMap           }
+'{'                             { Located $$ T.OpenMap           }
 '}'                             { Located _ T.CloseMap          }
 SEP                             { Located _ T.LayoutSep         }
 END                             { Located _ T.LayoutEnd         }
@@ -33,48 +33,48 @@ EOF                             { Located _ T.EOF               }
 
 %%
 
-config ::                       { Value                         }
+config ::                       { Value Position                }
   : value EOF                   { $1                            }
 
-value ::                        { Value                         }
-  : sections END                { Sections (reverse $1)         }
-  | list     END                { List     (reverse $1)         }
+value ::                        { Value Position                }
+  : sections END                { sections $1                   }
+  | '*' list END                { List $1 (reverse $2)          }
   | simple                      { $1                            }
 
-simple ::                       { Value                         }
-  : NUMBER                      { number $1                     }
+simple ::                       { Value Position                }
+  : NUMBER                      { number   $1                   }
   | FLOATING                    { floating $1                   }
-  | STRING                      { Text   $1                     }
-  | ATOM                        { Atom (MkAtom $1)              }
-  | '{' inlinesections '}'      { Sections (reverse $2)         }
-  | '[' inlinelist ']'          { List (reverse $2)             }
+  | STRING                      { text     $1                   }
+  | ATOM                        { atom     $1                   }
+  | '{' inlinesections '}'      { Sections $1 (reverse $2) }
+  | '[' inlinelist ']'          { List     $1 (reverse $2) }
 
-sections ::                     { [Section]                     }
+sections ::                     { [Section Position]            }
   :              section        { [$1]                          }
   | sections SEP section        { $3 : $1                       }
 
-inlinesections ::               { [Section]                     }
+inlinesections ::               { [Section Position]            }
   :                             { []                            }
   | inlinesections1             { $1                            }
   | inlinesections1 ','         { $1                            }
 
-inlinesections1 ::              { [Section]                     }
+inlinesections1 ::              { [Section Position]            }
   :                     section { [$1]                          }
   | inlinesections1 ',' section { $3 : $1                       }
 
-section ::                      { Section                       }
-  : SECTION value               { Section $1 $2                 }
+section ::                      { Section Position              }
+  : SECTION value               { section $1 $2                 }
 
-list ::                         { [Value]                       }
-  :          '*' value          { [$2]                          }
+list ::                         { [Value Position]              }
+  :              value          { [$1]                          }
   | list SEP '*' value          { $4 : $1                       }
 
-inlinelist ::                   { [Value]                       }
+inlinelist ::                   { [Value Position]              }
   :                             { []                            }
   | inlinelist1                 { $1                            }
   | inlinelist1 ','             { $1                            }
 
-inlinelist1 ::                  { [Value]                       }
+inlinelist1 ::                  { [Value Position]              }
   :                 simple      { [$1]                          }
   | inlinelist1 ',' simple      { $3 : $1                       }
 
@@ -83,14 +83,27 @@ inlinelist1 ::                  { [Value]                       }
 -- | Convert number token to number value. This needs a custom
 -- function like this because there are two value matched from
 -- the constructor.
-number :: Token -> Value
-number = \(T.Number base val) -> Number base val
+number :: Located Token -> Value Position
+number = \(Located a (T.Number base val)) -> Number a base val
 
 -- | Convert floating token to floating value. This needs a custom
 -- function like this because there are two value matched from
 -- the constructor.
-floating :: Token -> Value
-floating = \(T.Floating coef expo) -> Floating coef expo
+floating :: Located Token -> Value Position
+floating = \(Located a (T.Floating coef expo)) -> Floating a coef expo
+
+section :: Located Token -> Value Position -> Section Position
+section = \(Located a (T.Section k)) v -> Section a k v
+
+sections :: [Section Position] -> Value Position
+sections xxs = Sections (sectionAnn x) (x:xs)
+  where x:xs = reverse xxs
+
+text :: Located Token -> Value Position
+text = \(Located a (T.String x)) -> Text a x
+
+atom :: Located Token -> Value Position
+atom = \(Located a (T.Atom x)) -> Atom a (MkAtom x)
 
 errorP :: [Located Token] -> Either (Located Token) a
 errorP xs = Left (head xs)
@@ -98,8 +111,8 @@ errorP xs = Left (head xs)
 -- | Attempt to parse a layout annotated token stream or
 -- the token that caused the parse to fail.
 parseValue ::
-  [Located Token]              {- ^ layout annotated token stream -} ->
-  Either (Located Token) Value {- ^ token at failure or result -}
+  [Located Token]                         {- ^ layout annotated token stream -} ->
+  Either (Located Token) (Value Position) {- ^ token at failure or result -}
 parseValue = config
 
 }

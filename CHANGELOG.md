@@ -1,3 +1,8 @@
+0.6
+---
+* Annotate `Value` with file positions
+* Derive `Generic1` instances for `Value`
+
 0.5.1
 ---
 * Allow trailing commas in lists and section lists

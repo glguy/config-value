@@ -13,17 +13,17 @@ import Config.Value
 -- Sections will nest complex values underneath with
 -- indentation and simple values will be rendered on
 -- the same line as their section.
-pretty :: Value -> Doc
+pretty :: Value a -> Doc
 pretty value =
   case value of
-    Sections [] -> text "{}"
-    Sections xs -> prettySections xs
-    Number b n  -> prettyNum b n
-    Floating c e-> prettyFloating c e
-    Text t      -> prettyText (Text.unpack t)
-    Atom t      -> text (Text.unpack (atomName t))
-    List []     -> text "[]"
-    List xs     -> vcat [ char '*' <+> pretty x | x <- xs ]
+    Sections _ [] -> text "{}"
+    Sections _ xs -> prettySections xs
+    Number _ b n  -> prettyNum b n
+    Floating _ c e-> prettyFloating c e
+    Text _ t      -> prettyText (Text.unpack t)
+    Atom _ t      -> text (Text.unpack (atomName t))
+    List _ []     -> text "[]"
+    List _ xs     -> vcat [ char '*' <+> pretty x | x <- xs ]
 
 
 prettyNum :: Int -> Integer -> Doc
@@ -48,7 +48,7 @@ prettyText = doubleQuotes . cat . snd . mapAccumL ppChar True
           | otherwise = (False, char '\\' <> int (fromEnum x))
 
 
-prettySections :: [Section] -> Doc
+prettySections :: [Section a] -> Doc
 prettySections ss = prettySmallSections small $$ rest
   where
   (small,big) = break (isBig . sectionValue) ss
@@ -56,12 +56,12 @@ prettySections ss = prettySmallSections small $$ rest
                   []     -> empty
                   b : bs -> prettyBigSection b $$ prettySections bs
 
-prettyBigSection :: Section -> Doc
+prettyBigSection :: Section a -> Doc
 prettyBigSection s =
   text (Text.unpack (sectionName s)) <> colon
   $$ nest 2 (pretty (sectionValue s))
 
-prettySmallSections :: [Section] -> Doc
+prettySmallSections :: [Section a] -> Doc
 prettySmallSections ss = vcat (map pp annotated)
   where
   annotate s = (Text.length (sectionName s), s)
@@ -69,15 +69,15 @@ prettySmallSections ss = vcat (map pp annotated)
   indent     = 1 + maximum (0 : map fst annotated)
   pp (l,s)   = prettySmallSection (indent - l) s
 
-prettySmallSection :: Int -> Section -> Doc
+prettySmallSection :: Int -> Section a -> Doc
 prettySmallSection n s =
   text (Text.unpack (sectionName s)) <> colon <>
     text (replicate n ' ') <> pretty (sectionValue s)
 
-isBig :: Value -> Bool
-isBig (Sections (_:_))  = True
-isBig (List (_:_))      = True
-isBig _                 = False
+isBig :: Value a -> Bool
+isBig (Sections _ (_:_)) = True
+isBig (List _ (_:_))     = True
+isBig _                  = False
 
 
 

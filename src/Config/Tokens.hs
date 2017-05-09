@@ -13,7 +13,7 @@ import Data.Text (Text)
 -- | A position in a text file
 data Position = Position
   { posIndex, posLine, posColumn :: {-# UNPACK #-} !Int }
-  deriving (Read, Show)
+  deriving (Read, Show, Ord, Eq)
 
 -- | A value annotated with its text file position
 data Located a = Located

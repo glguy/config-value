@@ -1,6 +1,4 @@
-{-# LANGUAGE CPP                #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# Language CPP, DeriveGeneric, DeriveTraversable, DeriveDataTypeable #-}
 
 #ifndef MIN_VERSION_base
 #define MIN_VERSION_base(x,y,z) 1
@@ -13,6 +11,7 @@ module Config.Value
   ( Section(..)
   , Value(..)
   , Atom(..)
+  , valueAnn
   ) where
 
 import Data.Text    (Text)
@@ -20,7 +19,7 @@ import Data.Data    (Data, Typeable)
 import Data.String  (IsString(..))
 
 #if MIN_VERSION_base(4,6,0)
-import GHC.Generics (Generic)
+import GHC.Generics (Generic, Generic1)
 #endif
 
 -- | A single section of a 'Value'
@@ -28,13 +27,15 @@ import GHC.Generics (Generic)
 -- Example:
 --
 --    * @my-key: my-value@ is @'Section' ('Atom' "my-key") ('Atom' "my-value")@
-data Section = Section
-  { sectionName  :: Text
-  , sectionValue :: Value
+data Section a = Section
+  { sectionAnn   :: a
+  , sectionName  :: Text
+  , sectionValue :: Value a
   }
-  deriving (Eq, Read, Show, Typeable, Data
+  deriving ( Eq, Read, Show, Typeable, Data
+           , Functor, Foldable, Traversable
 #if MIN_VERSION_base(4,6,0)
-           , Generic
+           , Generic, Generic1
 #endif
            )
 
@@ -42,7 +43,7 @@ data Section = Section
 -- type in a configuration. Atoms can be constructed
 -- using the @OverloadedStrings@ extension.
 newtype Atom = MkAtom { atomName :: Text }
-  deriving (Eq, Ord, Show, Read, Typeable, Data
+  deriving ( Eq, Ord, Show, Read, Typeable, Data
 #if MIN_VERSION_base(4,6,0)
            , Generic
 #endif
@@ -60,6 +61,9 @@ instance IsString Atom where
 -- the concrete syntax. This allows representing numbers that would
 -- otherwise overflow a 'Double'.
 --
+-- 'Value' is parameterized over an annotation type indented to be used for
+-- file position or other application specific information.
+--
 -- Examples:
 --
 --    * @0xff@ is @'Number' 16 255@
@@ -68,15 +72,27 @@ instance IsString Atom where
 --
 --    * @123e10@ is @'Floating' 123 10@
 --    * @123.45@ is @'Floating' 12345 (-2)@
-data Value
-  = Sections [Section] -- ^ lists of key-value pairs
-  | Number   Int Integer -- ^ integer literal base (2, 8, 10, or 16) and integer value
-  | Floating Integer Integer -- ^ coef exponent: coef * 10 ^ exponent
-  | Text     Text -- ^ quoted strings
-  | Atom     Atom -- ^ unquoted strings
-  | List     [Value] -- ^ lists
-  deriving (Eq, Read, Show, Typeable, Data
+data Value a
+  = Sections a [Section a] -- ^ lists of key-value pairs
+  | Number   a Int Integer -- ^ integer literal base (2, 8, 10, or 16) and integer value
+  | Floating a Integer Integer -- ^ coef exponent: coef * 10 ^ exponent
+  | Text     a Text -- ^ quoted strings
+  | Atom     a Atom -- ^ unquoted strings
+  | List     a [Value a] -- ^ lists
+  deriving ( Eq, Read, Show, Typeable, Data
+           , Functor, Foldable, Traversable
 #if MIN_VERSION_base(4,6,0)
-           , Generic
+           , Generic, Generic1
 #endif
            )
+
+-- | Returns the annotation for a value.
+valueAnn :: Value a -> a
+valueAnn v =
+  case v of
+    Sections a _   -> a
+    Number   a _ _ -> a
+    Floating a _ _ -> a
+    Text     a _   -> a
+    Atom     a _   -> a
+    List     a _   -> a
