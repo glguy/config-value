@@ -249,18 +249,22 @@ module Config
   , Value(..)
   , Atom(..)
   , valueAnn
+
+  -- * Errors
+  , ParseError(..)
   ) where
 
-import Config.Value  (Atom(..), Value(..), Section(..), valueAnn)
-import Config.Parser (parseValue)
-import Config.Pretty (pretty)
-import Config.Lexer  (scanTokens)
-import Config.Tokens (Error(..), Position(..), Located(..), layoutPass, Token)
+import           Config.Value  (Atom(..), Value(..), Section(..), valueAnn)
+import           Config.Parser (parseValue)
+import           Config.Pretty (pretty)
+import           Config.Lexer  (scanTokens)
+import           Config.Tokens (Error(..), Position(..), Located(..), layoutPass, Token)
 import qualified Config.Tokens as T
 
-import Numeric (showIntAtBase)
-import Data.Char (intToDigit)
-import Data.Text (Text)
+import           Control.Exception (Exception(..))
+import           Numeric (showIntAtBase)
+import           Data.Char (intToDigit)
+import           Data.Text (Text)
 import qualified Data.Text as Text
 
 -- | Parse a configuration file and return the result on the
@@ -270,35 +274,44 @@ import qualified Data.Text as Text
 --
 -- Note: Text file lines are terminated by new-lines.
 parse ::
-  Text                           {- ^ source text                    -} ->
-  Either String (Value Position) {- ^ error message or parsed value  -}
+  Text                               {- ^ source text                    -} ->
+  Either ParseError (Value Position) {- ^ error message or parsed value  -}
 parse txt =
   case parseValue (layoutPass (scanTokens txt)) of
     Right x -> Right x
-    Left (Located posn token) -> Left (explain posn token)
+    Left (Located posn token) -> Left (ParseError posn (explainToken token))
 
-explain :: Position -> Token -> String
-explain posn token
-   = "line "    ++ show (posLine   posn)
-  ++ " column " ++ show (posColumn posn) ++ ": "
-  ++ case token of
-       T.Error e     -> explainError e
-       T.Atom atom   -> "parse error: unexpected atom: `" ++ Text.unpack atom ++ "`"
-       T.String str  -> "parse error: unexpected string: " ++ show (Text.unpack str)
-       T.Bullet      -> "parse error: unexpected bullet '*'"
-       T.Comma       -> "parse error: unexpected comma ','"
-       T.Section s   -> "parse error: unexpected section: `" ++ Text.unpack s ++ "`"
-       T.Number 2  n -> "parse error: unexpected number: 0b" ++ showIntAtBase 2  intToDigit n ""
-       T.Number 8  n -> "parse error: unexpected number: 0o" ++ showIntAtBase 8  intToDigit n ""
-       T.Number 16 n -> "parse error: unexpected number: 0x" ++ showIntAtBase 16 intToDigit n ""
-       T.Number _  n -> "parse error: unexpected number: "   ++ showIntAtBase 10 intToDigit n ""
-       T.OpenList    -> "parse error: unexpected start of list '['"
-       T.CloseList   -> "parse error: unexpected end of list ']'"
-       T.OpenMap     -> "parse error: unexpected start of section '{'"
-       T.CloseMap    -> "parse error: unexpected end of section '}'"
-       T.LayoutSep   -> "parse error: unexpected end of block"
-       T.LayoutEnd   -> "parse error: unexpected end of block"
-       T.EOF         -> "parse error: unexpected end of file"
+-- | Error messages that can occur during parsing annotated with a file position.
+data ParseError = ParseError Position String
+  deriving (Read, Show, Eq, Ord)
+
+-- | 'displayException' implements a pretty format
+instance Exception ParseError where
+  displayException (ParseError posn msg) =
+    "line "    ++ show (posLine   posn) ++
+    " column " ++ show (posColumn posn) ++
+    ": "       ++ msg
+
+explainToken :: Token -> String
+explainToken token =
+  case token of
+    T.Error e     -> explainError e
+    T.Atom atom   -> "parse error: unexpected atom: `" ++ Text.unpack atom ++ "`"
+    T.String str  -> "parse error: unexpected string: " ++ show (Text.unpack str)
+    T.Bullet      -> "parse error: unexpected bullet '*'"
+    T.Comma       -> "parse error: unexpected comma ','"
+    T.Section s   -> "parse error: unexpected section: `" ++ Text.unpack s ++ "`"
+    T.Number 2  n -> "parse error: unexpected number: 0b" ++ showIntAtBase 2  intToDigit n ""
+    T.Number 8  n -> "parse error: unexpected number: 0o" ++ showIntAtBase 8  intToDigit n ""
+    T.Number 16 n -> "parse error: unexpected number: 0x" ++ showIntAtBase 16 intToDigit n ""
+    T.Number _  n -> "parse error: unexpected number: "   ++ showIntAtBase 10 intToDigit n ""
+    T.OpenList    -> "parse error: unexpected start of list '['"
+    T.CloseList   -> "parse error: unexpected end of list ']'"
+    T.OpenMap     -> "parse error: unexpected start of section '{'"
+    T.CloseMap    -> "parse error: unexpected end of section '}'"
+    T.LayoutSep   -> "parse error: unexpected end of block"
+    T.LayoutEnd   -> "parse error: unexpected end of block"
+    T.EOF         -> "parse error: unexpected end of file"
 
 explainError :: Error -> String
 explainError e =
