@@ -1,8 +1,4 @@
-{-# Language CPP, DeriveGeneric, DeriveTraversable, DeriveDataTypeable #-}
-
-#ifndef MIN_VERSION_base
-#define MIN_VERSION_base(x,y,z) 1
-#endif
+{-# Language DeriveGeneric, DeriveTraversable, DeriveDataTypeable #-}
 
 -- | This module provides the types used in this package for configuration.
 -- Visit "ConfigFile.Parser" to parse values of this type in a convenient
@@ -17,10 +13,7 @@ module Config.Value
 import Data.Text    (Text)
 import Data.Data    (Data, Typeable)
 import Data.String  (IsString(..))
-
-#if MIN_VERSION_base(4,6,0)
 import GHC.Generics (Generic, Generic1)
-#endif
 
 -- | A single section of a 'Value'
 --
@@ -34,9 +27,7 @@ data Section a = Section
   }
   deriving ( Eq, Read, Show, Typeable, Data
            , Functor, Foldable, Traversable
-#if MIN_VERSION_base(4,6,0)
            , Generic, Generic1
-#endif
            )
 
 -- | Wrapper to distinguish 'Atom' from 'Text' by
@@ -44,9 +35,7 @@ data Section a = Section
 -- using the @OverloadedStrings@ extension.
 newtype Atom = MkAtom { atomName :: Text }
   deriving ( Eq, Ord, Show, Read, Typeable, Data
-#if MIN_VERSION_base(4,6,0)
            , Generic
-#endif
            )
 
 instance IsString Atom where
@@ -81,9 +70,7 @@ data Value a
   | List     a [Value a] -- ^ lists
   deriving ( Eq, Read, Show, Typeable, Data
            , Functor, Foldable, Traversable
-#if MIN_VERSION_base(4,6,0)
            , Generic, Generic1
-#endif
            )
 
 -- | Returns the annotation for a value.
