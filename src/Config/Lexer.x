@@ -78,7 +78,7 @@ $white+                 ;
 <stringlit> {
 \"                      { endMode                       }
 "\" @escape             ;
-"\" \n $white* "\"      ;
+"\" $white+ "\"         ;
 "\" .                   { token (Error . BadEscape)     }
 .                       ;
 \n                      { untermString                  }

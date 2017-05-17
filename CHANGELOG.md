@@ -1,6 +1,7 @@
-0.6.0.1
+0.6.1
 ---
 * Add vim syntax highlighting file
+* Fix string gaps, they shouldn't require a newline
 
 0.6
 ---
