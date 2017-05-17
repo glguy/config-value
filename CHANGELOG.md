@@ -1,3 +1,7 @@
+0.6.0.1
+---
+* Add vim syntax highlighting file
+
 0.6
 ---
 * Annotate `Value` with file positions

@@ -1,5 +1,5 @@
 name:                config-value
-version:             0.6
+version:             0.6.0.1
 synopsis:            Simple, layout-based value language similar to YAML or JSON
 license:             MIT
 license-file:        LICENSE
@@ -19,6 +19,7 @@ tested-with:         GHC==7.4.2, GHC==7.6.3, GHC==7.8.4, GHC==7.10.3, GHC==8.0.2
 
 extra-source-files:    README.md
                        CHANGELOG.md
+                       config-value.vim
 
 library
 
