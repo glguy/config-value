@@ -14,11 +14,10 @@ syn match   cvStringGap         contained "\\[\n\ \t]*\\"
 syn match   cvSpecialChar       contained "\\\([0-9]\+\|o[0-7]\+\|x[0-9a-fA-F]\+\|[\"\\'&\\abfnrtv]\|\^[A-Z^_\[\\\]]\)"
 syn match   cvSpecialChar       contained "\\\(NUL\|SOH\|STX\|ETX\|EOT\|ENQ\|ACK\|BEL\|BS\|HT\|LF\|VT\|FF\|CR\|SO\|SI\|DLE\|DC1\|DC2\|DC3\|DC4\|NAK\|SYN\|ETB\|CAN\|EM\|SUB\|ESC\|FS\|GS\|RS\|US\|SP\|DEL\)"
 syn match   cvSpecialCharError  contained "\\&\|'''\+"
-syn region  cvString            start=+"+  skip=+\\\\\|\\"+  end=+"+  contains=cvStringGap,cvSpecialChar
-syn match   cvCharacter         "[^a-zA-Z0-9_']'\([^\\]\|\\[^']\+\|\\'\)'"lc=1 contains=cvSpecialChar,cvSpecialCharError
-syn match   cvCharacter         "^'\([^\\]\|\\[^']\+\|\\'\)'" contains=cvSpecialChar,cvSpecialCharError
-syn match   cvNumber            "\<[0-9]\+\>\|\<0[xX][0-9a-fA-F]\+\>\|\<0[oO][0-7]\+\>\|\<0[bB][0-1]\+\>"
-syn match   cvFloat             "\<[0-9]\+\.[0-9]\+\([eE][-+]\=[0-9]\+\)\=\>"
+syn region  cvString            start=+"+  skip=+\\\\\|\\"+  end=+"\|\n+ contains=cvStringGap,cvSpecialChar
+syn match   cvNumber            "-\=\([0-9]\+\|0[xX][0-9a-fA-F]\+\|0[oO][0-7]\+\|0[bB][0-1]\+\)\>"
+syn match   cvFloat             "-\=[0-9]\+\.[0-9]\+\([eE][-+]\=[0-9]\+\)\=\>"
+syn match   cvFloat             "-\=[0-9]\+[eE][-+]\=[0-9]\+\>"
 
 syn match   cvAtom              "\<[a-zA-Z][a-zA-Z0-9\._\-]*\>"
 
@@ -32,7 +31,6 @@ hi def link cvSpecialCharError            Error
 hi def link cvSpecialChar                 SpecialChar
 hi def link cvStringGap                   SpecialChar
 hi def link cvString                      String
-hi def link cvCharacter                   Character
 hi def link cvNumber                      Number
 hi def link cvFloat                       Float
 
