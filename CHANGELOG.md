@@ -1,3 +1,7 @@
+0.6.2
+---
+* Nicer errors on unterminated inline lists and sections.
+
 0.6.1
 ---
 * Add vim syntax highlighting file
