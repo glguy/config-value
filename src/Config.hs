@@ -318,7 +318,6 @@ explainError e =
   case e of
     T.UntermComment       -> "lexical error: unterminated comment"
     T.UntermString        -> "lexical error: unterminated string literal"
-    T.UntermFile          -> "lexical error: unterminated line"
     T.UntermSections      -> "lexical error: unterminated sections"
     T.UntermList          -> "lexical error: unterminated list"
     T.BadEscape c         -> "lexical error: bad escape sequence: " ++ Text.unpack c

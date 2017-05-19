@@ -1,6 +1,7 @@
 0.6.2
 ---
 * Nicer errors on unterminated inline lists and sections.
+* Stop enforcing well-formed text files
 
 0.6.1
 ---

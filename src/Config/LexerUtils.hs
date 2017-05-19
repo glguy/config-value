@@ -49,11 +49,17 @@ move (Position ix line column) c =
 eofAction :: Position -> LexerMode -> [Located Token]
 eofAction eofPosn st =
   case st of
-    _ | posColumn eofPosn /= 1 -> [Located eofPosn (Error UntermFile)]
-    InComment       posn _     -> [Located posn    (Error UntermComment)]
-    InCommentString posn _     -> [Located posn    (Error UntermComment)]
-    InString        posn _     -> [Located posn    (Error UntermString)]
-    InNormal                   -> [Located eofPosn{posColumn=0} EOF]
+    InComment       posn _     -> [Located posn (Error UntermComment)]
+    InCommentString posn _     -> [Located posn (Error UntermComment)]
+    InString        posn _     -> [Located posn (Error UntermString)]
+    InNormal                   -> [Located (park eofPosn) EOF]
+
+-- | Terminate the line if needed and move the cursor to column 0 to ensure
+-- that it terminates any top-level block.
+park :: Position -> Position
+park pos
+  | posColumn pos == 1 = pos { posColumn = 0 }
+  | otherwise          = pos { posColumn = 0, posLine = posLine pos + 1 }
 
 -- | Action to perform when lexer gets stuck. Emits an error.
 errorAction :: AlexInput -> [Located Token]

@@ -51,7 +51,6 @@ data Token
 data Error
   = UntermComment
   | UntermString
-  | UntermFile
   | UntermList
   | UntermSections
   | BadEscape Text
