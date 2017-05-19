@@ -5,6 +5,11 @@
 This package implements a simple, layout-based value definition language
 used for supplying configuration values to various applications.
 
+Live Demo
+--------
+
+The config-value and config-schema packages are available in a [live demo](https://glguy.net/config-demo/).
+
 Example
 -------
 ```
