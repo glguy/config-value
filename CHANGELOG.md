@@ -1,3 +1,7 @@
+0.6.3
+---
+* Add `valuePlate`
+
 0.6.2.1
 ---
 * Fixed error output for unexpected floating point literal
