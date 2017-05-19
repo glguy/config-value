@@ -48,8 +48,13 @@ simple ::                       { Value Position                }
   | ATOM                        { atom     $1                   }
   | '{' inlinesections '}'      { Sections $1 (reverse $2)      }
   | '[' inlinelist ']'          { List     $1 (reverse $2)      }
-  | '{' inlinesections error    {% untermSections $1            }
-  | '[' inlinelist error        {% untermList     $1            }
+  | '{' inlinesections term     {% untermSections $1            }
+  | '[' inlinelist     term     {% untermList     $1            }
+
+term ::                         { ()                            }
+term : EOF                      { ()                            }
+     | END                      { ()                            }
+     | SEP                      { ()                            }
 
 sections ::                     { [Section Position]            }
   :              section        { [$1]                          }
