@@ -6,13 +6,11 @@
 module Config.LexerUtils where
 
 import Data.Char            (GeneralCategory(..), generalCategory, digitToInt,
-                             isAscii, isSpace, readLitChar, ord, isDigit)
-import Data.Monoid          ((<>))
+                             isAscii, isSpace, ord, isDigit)
 import Data.Text            (Text)
 import Data.Word            (Word8)
 import Numeric              (readInt)
 import qualified Data.Text      as Text
-import qualified Data.Text.Lazy as LText
 
 import Config.Tokens
 
@@ -106,7 +104,7 @@ startString _ (Located posn text) _ = (InString posn text, [])
 
 -- | Successfully terminate the current mode and emit tokens as needed
 endMode :: Action
-endMode len (Located endPosn match) mode =
+endMode len (Located endPosn _) mode =
   case mode of
     InNormal                 -> (InNormal, [])
     InCommentString _ st     -> (st, [])

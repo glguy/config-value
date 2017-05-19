@@ -296,6 +296,7 @@ explainToken :: Token -> String
 explainToken token =
   case token of
     T.Error e     -> explainError e
+    T.Floating{}  -> "parse error: unexpected floating-point literal"
     T.Atom atom   -> "parse error: unexpected atom: `" ++ Text.unpack atom ++ "`"
     T.String str  -> "parse error: unexpected string: " ++ show (Text.unpack str)
     T.Bullet      -> "parse error: unexpected bullet '*'"
