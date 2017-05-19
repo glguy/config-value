@@ -1,5 +1,3 @@
-{-# LANGUAGE CPP #-}
-
 -- | Optics for compatibility with the lens package
 module Config.Lens
   ( key
@@ -14,13 +12,7 @@ module Config.Lens
   ) where
 
 import Config.Value
-
 import Data.Text
-
-#if !MIN_VERSION_base(4,8,0)
-import Control.Applicative
-import Data.Traversable
-#endif
 
 -- | Apply a function to the subsections of the given value when
 -- that value is a @Sections@ and the subsection name matches the
