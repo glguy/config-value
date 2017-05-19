@@ -52,6 +52,8 @@ data Error
   = UntermComment
   | UntermString
   | UntermFile
+  | UntermList
+  | UntermSections
   | BadEscape Text
   | NoMatch Char
   deriving (Show)

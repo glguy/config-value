@@ -46,8 +46,10 @@ simple ::                       { Value Position                }
   | FLOATING                    { floating $1                   }
   | STRING                      { text     $1                   }
   | ATOM                        { atom     $1                   }
-  | '{' inlinesections '}'      { Sections $1 (reverse $2) }
-  | '[' inlinelist ']'          { List     $1 (reverse $2) }
+  | '{' inlinesections '}'      { Sections $1 (reverse $2)      }
+  | '[' inlinelist ']'          { List     $1 (reverse $2)      }
+  | '{' inlinesections error    {% untermSections $1            }
+  | '[' inlinelist error        {% untermList     $1            }
 
 sections ::                     { [Section Position]            }
   :              section        { [$1]                          }
@@ -107,6 +109,12 @@ atom = \(Located a (T.Atom x)) -> Atom a (MkAtom x)
 
 errorP :: [Located Token] -> Either (Located Token) a
 errorP xs = Left (head xs)
+
+untermSections :: Position -> Either (Located Token) a
+untermSections p = Left (Located p (T.Error T.UntermSections))
+
+untermList :: Position -> Either (Located Token) a
+untermList p = Left (Located p (T.Error T.UntermList))
 
 -- | Attempt to parse a layout annotated token stream or
 -- the token that caused the parse to fail.
