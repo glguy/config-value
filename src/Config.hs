@@ -302,10 +302,10 @@ explainToken token =
     T.Bullet      -> "parse error: unexpected bullet '*'"
     T.Comma       -> "parse error: unexpected comma ','"
     T.Section s   -> "parse error: unexpected section: `" ++ Text.unpack s ++ "`"
-    T.Number 2  n -> "parse error: unexpected number: 0b" ++ showIntAtBase 2  intToDigit n ""
-    T.Number 8  n -> "parse error: unexpected number: 0o" ++ showIntAtBase 8  intToDigit n ""
-    T.Number 16 n -> "parse error: unexpected number: 0x" ++ showIntAtBase 16 intToDigit n ""
-    T.Number _  n -> "parse error: unexpected number: "   ++ showIntAtBase 10 intToDigit n ""
+    T.Number 2  n -> "parse error: unexpected number: " ++ showIntAtBase' "0b"  2 intToDigit n ""
+    T.Number 8  n -> "parse error: unexpected number: " ++ showIntAtBase' "0o"  8 intToDigit n ""
+    T.Number 16 n -> "parse error: unexpected number: " ++ showIntAtBase' "0x" 16 intToDigit n ""
+    T.Number _  n -> "parse error: unexpected number: " ++ showIntAtBase' ""   10 intToDigit n ""
     T.OpenList    -> "parse error: unexpected start of list '['"
     T.CloseList   -> "parse error: unexpected end of list ']'"
     T.OpenMap     -> "parse error: unexpected start of section '{'"
@@ -313,6 +313,11 @@ explainToken token =
     T.LayoutSep   -> "parse error: unexpected end of block"
     T.LayoutEnd   -> "parse error: unexpected end of block"
     T.EOF         -> "parse error: unexpected end of file"
+
+showIntAtBase' :: (Show a, Integral a) => String -> a -> (Int -> Char) -> a -> ShowS
+showIntAtBase' pfx base toDigit n
+  | n < 0     = showChar '-' . showString pfx . showIntAtBase base toDigit (negate n)
+  | otherwise =                showString pfx . showIntAtBase base toDigit n
 
 explainError :: Error -> String
 explainError e =
