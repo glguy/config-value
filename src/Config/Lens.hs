@@ -1,4 +1,12 @@
--- | Optics for compatibility with the lens package
+{-|
+Module      : Config.Lens
+Description : Lenses and traversals for manipulating 'Value' values.
+Copyright   : (c) Eric Mertens, 2017
+License     : ISC
+Maintainer  : emertens@gmail.com
+
+Lenses and traversals for compatibility with the lens package
+-}
 module Config.Lens
   ( key
   , text
@@ -14,17 +22,17 @@ module Config.Lens
 import Config.Value
 import Data.Text
 
--- | Apply a function to the subsections of the given value when
--- that value is a @Sections@ and the subsection name matches the
--- given section name 
+-- | Traversal for the subsections of the given 'Value' when
+-- that value is a 'Sections' and the section name matches the
+-- given name.
 key ::
   Applicative f =>
   Text {- ^ section name -} ->
   (Value a -> f (Value a)) -> Value a -> f (Value a)
 key i = sections . traverse . section i
 
--- | Apply a function to the 'Value' contained inside the given
--- 'Value' when it is a section name matches the given name.
+-- | Traversal for the 'Value' contained inside the given
+-- 'Section' when its section name matches the given name.
 section ::
   Applicative f =>
   Text {- ^ section name -} ->
@@ -32,39 +40,37 @@ section ::
 section i f s@(Section a j v) | i == j    = Section a j <$> f v
                               | otherwise = pure s
 
--- | Apply a function to the ['Section'] contained inside the given
--- 'Value' when it is a @Sections@.
+-- | Traversal for the ['Section'] contained inside the given
+-- 'Value' when it is a 'Sections'.
 sections :: Applicative f => ([Section a] -> f [Section a]) -> Value a -> f (Value a)
 sections f (Sections a xs) = Sections a <$> f xs
 sections _ v               = pure v
 
--- | Apply a function to the 'Text' contained inside the given
--- 'Value' when it is a @Text@.
+-- | Traversal for the 'Text' contained inside the given 'Value'.
 text :: Applicative f => (Text -> f Text) -> Value a -> f (Value a)
 text f (Text a t) = Text a <$> f t
 text _ v          = pure v
 
--- | Apply a function to the 'Text' contained inside the given
--- 'Value' when it is a @Text@. This traversal is only valid
--- if the output atom is a valid atom!
+-- | Traversal for the 'Atom' contained inside the given 'Value'.
 atom :: Applicative f => (Atom -> f Atom) -> Value a -> f (Value a)
 atom f (Atom a t) = Atom a <$> f t
 atom _ v          = pure v
 
--- | Apply a function to the 'Integer' contained inside the given
--- 'Value' when it is a @Number@.
+-- | Traversal for the 'Integer' contained inside the given
+-- 'Value' when it is a 'Number'.
 number :: Applicative f => (Integer -> f Integer) -> Value a -> f (Value a)
 number f (Number a b n) = Number a b <$> f n
 number _ v              = pure v
 
--- | Apply a function to the ['Value'] contained inside the given
--- 'Value' when it is a @List@.
+-- | Traversal for the ['Value'] contained inside the given
+-- 'Value' when it is a 'List'.
 list :: Applicative f => ([Value a] -> f [Value a]) -> Value a -> f (Value a)
 list f (List a xs) = List a <$> f xs
 list _ v           = pure v
 
--- | Apply a function to any of the immediate values in a list or
--- a sections list. This is intended to be used with Control.Lens.Plated.
+-- | Traversal for the immediate values in a list or a sections list.
+--
+-- This is intended to be used with "Control.Lens.Plated".
 valuePlate :: Applicative f => (Value a -> f (Value a)) -> Value a -> f (Value a)
 valuePlate f (List     a xs) = List     a <$> traverse             f  xs
 valuePlate f (Sections a xs) = Sections a <$> traverse (sectionVal f) xs
@@ -73,14 +79,17 @@ valuePlate _ v               = pure v
 sectionVal :: Functor f => (Value a -> f (Value a)) -> Section a -> f (Section a)
 sectionVal f (Section a k v) = Section a k <$> f v
 
--- | Apply a function to the 'Value' elements inside the given
--- 'Value' when it is a @List@.
+-- | Traversal for the 'Value' elements inside the given
+-- 'Value' when it is a 'List'.
 --
--- > values = list . traverse
+-- @
+-- 'values' = 'list' . 'traverse'
+-- @
 values :: Applicative f => (Value a -> f (Value a)) -> Value a -> f (Value a)
 values = list . traverse
 
 
+-- | Lens for the annotation component of a 'Value'
 ann :: Functor f => (a -> f a) -> Value a -> f (Value a)
 ann f v =
   case v of
