@@ -68,10 +68,10 @@ data Layout = NoLayout | Layout Int
 
 -- | Single step of the layout pass
 step ::
-  Located Token              {- ^ current token          -} ->
-  ([Layout] -> [Located Token]) {- ^ continuation           -} ->
-  [Layout]                      {- ^ stack of layout scopes -} ->
-  [Located Token]            {- ^ token stream with layout -}
+  Located Token                 {- ^ current token            -} ->
+  ([Layout] -> [Located Token]) {- ^ continuation             -} ->
+  [Layout]                      {- ^ stack of layout scopes   -} ->
+  [Located Token]               {- ^ token stream with layout -}
 
 -- start blocks must be indented
 -- tokens before the current layout end the current layout
@@ -85,6 +85,7 @@ step t next cols =
     Layout{}:_       | usesLayout t   -> t : next (Layout (toCol t) : cols)
     _                                 -> t : next cols
 
+-- | Extract the column number from a located thing.
 toCol :: Located a -> Int
 toCol = posColumn . locPosition
 
