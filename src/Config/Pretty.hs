@@ -1,5 +1,5 @@
 -- | Pretty-printing implementation for 'Value'
-module Config.Pretty where
+module Config.Pretty (pretty) where
 
 import           Data.Char (isPrint, isDigit,intToDigit)
 import           Data.List (mapAccumL)
