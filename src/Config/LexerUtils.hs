@@ -3,7 +3,30 @@
 -- to segregate the automatically generated code from the
 -- hand written code. The automatically generated code
 -- causes lots of warnings which mask the interesting warnings.
-module Config.LexerUtils where
+module Config.LexerUtils
+  (
+  -- * Alex wrapper
+    AlexInput
+  , alexGetByte
+
+  -- * Lexer modes
+  , LexerMode(..)
+  , startString
+  , nestMode
+  , endMode
+
+  -- * Token builders
+  , token
+  , token_
+  , section
+  , number
+  , floating
+
+  -- * Final actions
+  , untermString
+  , eofAction
+  , errorAction
+  ) where
 
 import Data.Char            (GeneralCategory(..), generalCategory, digitToInt,
                              isAscii, isSpace, ord, isDigit)
@@ -30,10 +53,6 @@ alexGetByte (Located p cs)
        return (b, inp)
 
 ------------------------------------------------------------------------
-
--- | The initial 'Position' for the start of a file
-startPos :: Position
-startPos = Position { posIndex = 0, posLine = 1, posColumn = 1 }
 
 -- | Advance the position according to the kind of character lexed.
 move :: Position -> Char -> Position

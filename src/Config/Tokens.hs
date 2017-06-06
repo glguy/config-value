@@ -4,6 +4,7 @@ module Config.Tokens
   ( Token(..)
   , Located(..)
   , Position(..)
+  , startPos
   , Error(..)
   , layoutPass
   ) where
@@ -14,6 +15,10 @@ import Data.Text (Text)
 data Position = Position
   { posIndex, posLine, posColumn :: {-# UNPACK #-} !Int }
   deriving (Read, Show, Ord, Eq)
+
+-- | The initial 'Position' for the start of a file
+startPos :: Position
+startPos = Position { posIndex = 0, posLine = 1, posColumn = 1 }
 
 -- | A value annotated with its text file position
 data Located a = Located
