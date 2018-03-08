@@ -1,3 +1,7 @@
+0.6.3.1
+---
+* Build on GHC 8.4.1
+
 0.6.3
 ---
 * Add `valuePlate`

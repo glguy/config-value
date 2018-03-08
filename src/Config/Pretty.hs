@@ -6,6 +6,7 @@ import           Data.List (mapAccumL)
 import qualified Data.Text as Text
 import           Text.PrettyPrint
 import           Numeric(showIntAtBase)
+import           Prelude hiding ((<>))
 
 import Config.Value
 

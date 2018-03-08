@@ -1,5 +1,5 @@
 name:                config-value
-version:             0.6.3
+version:             0.6.3.1
 synopsis:            Simple, layout-based value language similar to YAML or JSON
 license:             MIT
 license-file:        LICENSE
@@ -33,7 +33,7 @@ library
                        Config.Pretty,
                        Config.Value
 
-  build-depends:       base       >= 4.8     && < 4.11,
+  build-depends:       base       >= 4.8     && < 4.12,
                        array      >= 0.4     && < 0.6,
                        pretty     >= 1.1.1.0 && < 1.2,
                        text       >= 1.2.0.4 && < 1.3
