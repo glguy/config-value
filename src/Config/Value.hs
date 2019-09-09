@@ -1,7 +1,7 @@
 {-# Language DeriveGeneric, DeriveTraversable, DeriveDataTypeable #-}
 
 -- | This module provides the types used in this package for configuration.
--- Visit "ConfigFile.Parser" to parse values of this type in a convenient
+-- Visit "Config.Parser" to parse values of this type in a convenient
 -- layout based notation.
 module Config.Value
   ( Section(..)
