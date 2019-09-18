@@ -250,10 +250,18 @@ module Config
   , Atom(..)
   , valueAnn
 
+  -- * Numbers
+  , Number
+  , numberToInteger
+  , numberToRational
+  , integerToNumber
+  , rationalToNumber
+
   -- * Errors
   , ParseError(..)
   ) where
 
+import           Config.Number (Number, numberToInteger, numberToRational, integerToNumber, rationalToNumber)
 import           Config.Value  (Atom(..), Value(..), Section(..), valueAnn)
 import           Config.Parser (parseValue)
 import           Config.Pretty (pretty)

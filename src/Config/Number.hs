@@ -1,6 +1,14 @@
 {-# Language DeriveDataTypeable #-}
--- | This module provides a representation of numbers in scientific
--- notation.
+{-|
+Module      : Config.Number
+Description : Scientific-notation numbers with explicit radix
+Copyright   : (c) Eric Mertens, 2019
+License     : ISC
+Maintainer  : emertens@gmail.com
+
+This module provides a representation of numbers in scientific
+notation.
+-}
 module Config.Number
   ( Number(..)
   , Radix(..)
