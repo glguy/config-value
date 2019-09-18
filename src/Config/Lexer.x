@@ -52,6 +52,7 @@ $alpha          = [$unilower $uniupper $asciialpha]
 @atom           = $alpha [$alpha $digit $unidigit \. _ \-]*
 
 @exponent       = [Ee] [\-\+]? @decimal
+@hexexponent    = [Pp] [\-\+]? @decimal
 
 config :-
 
@@ -65,11 +66,13 @@ $white+                 ;
 ","                     { token_ Comma                  }
 "]"                     { token_ CloseList              }
 "*"                     { token_ Bullet                 }
-"-"? 0 [Xx] @hexadecimal{ token (number 2 16)           }
-"-"? 0 [Oo] @octal      { token (number 2  8)           }
-"-"? 0 [Bb] @binary     { token (number 2  2)           }
-"-"? @decimal           { token (number 0 10)           }
-"-"? @decimal ("." @decimal)? @exponent? { token floating }
+
+"-"? 0 [Xx] @hexadecimal ("." @hexadecimal?)? @hexexponent?
+                        { token number }
+"-"? 0 [Oo] @octal      { token number }
+"-"? 0 [Bb] @binary     { token number }
+"-"? @decimal ("." @decimal?)? @exponent?
+                        { token number }
 @atom                   { token Atom                    }
 @atom $white_no_nl* :   { token section                 }
 \"                      { startString                   }

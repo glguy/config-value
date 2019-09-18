@@ -296,16 +296,12 @@ explainToken :: Token -> String
 explainToken token =
   case token of
     T.Error e     -> explainError e
-    T.Floating{}  -> "parse error: unexpected floating-point literal"
     T.Atom atom   -> "parse error: unexpected atom: `" ++ Text.unpack atom ++ "`"
     T.String str  -> "parse error: unexpected string: " ++ show (Text.unpack str)
     T.Bullet      -> "parse error: unexpected bullet '*'"
     T.Comma       -> "parse error: unexpected comma ','"
     T.Section s   -> "parse error: unexpected section: `" ++ Text.unpack s ++ "`"
-    T.Number 2  n -> "parse error: unexpected number: " ++ showIntAtBase' "0b"  2 intToDigit n ""
-    T.Number 8  n -> "parse error: unexpected number: " ++ showIntAtBase' "0o"  8 intToDigit n ""
-    T.Number 16 n -> "parse error: unexpected number: " ++ showIntAtBase' "0x" 16 intToDigit n ""
-    T.Number _  n -> "parse error: unexpected number: " ++ showIntAtBase' ""   10 intToDigit n ""
+    T.Number{}    -> "parse error: unexpected number"
     T.OpenList    -> "parse error: unexpected start of list '['"
     T.CloseList   -> "parse error: unexpected end of list ']'"
     T.OpenMap     -> "parse error: unexpected start of section '{'"

@@ -10,6 +10,7 @@ module Config.Tokens
   ) where
 
 import Data.Text (Text)
+import Config.Number
 
 -- | A position in a text file
 data Position = Position
@@ -37,8 +38,7 @@ data Token
   | Atom Text
   | Bullet
   | Comma
-  | Number Int Integer
-  | Floating Integer Integer
+  | Number Number
   | OpenList
   | CloseList
   | OpenMap

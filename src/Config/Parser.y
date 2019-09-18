@@ -15,7 +15,6 @@ SECTION                         { Located _ T.Section{}         }
 STRING                          { Located _ T.String{}          }
 ATOM                            { Located _ T.Atom{}            }
 NUMBER                          { Located _ T.Number{}          }
-FLOATING                        { Located _ T.Floating{}        }
 '*'                             { Located $$ T.Bullet            }
 '['                             { Located $$ T.OpenList          }
 ','                             { Located _ T.Comma             }
@@ -43,7 +42,6 @@ value ::                        { Value Position                }
 
 simple ::                       { Value Position                }
   : NUMBER                      { number   $1                   }
-  | FLOATING                    { floating $1                   }
   | STRING                      { text     $1                   }
   | ATOM                        { atom     $1                   }
   | '{' inlinesections '}'      { Sections $1 (reverse $2)      }
@@ -88,16 +86,10 @@ inlinelist1 ::                  { [Value Position]              }
 {
 
 -- | Convert number token to number value. This needs a custom
--- function like this because there are two value matched from
+-- function like this because there are multiple values matched from
 -- the constructor.
 number :: Located Token -> Value Position
-number = \(Located a (T.Number base val)) -> Number a base val
-
--- | Convert floating token to floating value. This needs a custom
--- function like this because there are two value matched from
--- the constructor.
-floating :: Located Token -> Value Position
-floating = \(Located a (T.Floating coef expo)) -> Floating a coef expo
+number = \(Located a (T.Number n)) -> Number a n
 
 section :: Located Token -> Value Position -> Section Position
 section = \(Located a (T.Section k)) v -> Section a k v

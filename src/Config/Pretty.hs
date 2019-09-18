@@ -3,12 +3,14 @@ module Config.Pretty (pretty) where
 
 import           Data.Char (isPrint, isDigit,intToDigit)
 import           Data.List (mapAccumL)
+import           Data.Ratio (numerator, denominator)
 import qualified Data.Text as Text
 import           Text.PrettyPrint
 import           Numeric(showIntAtBase)
 import           Prelude hiding ((<>))
 
-import Config.Value
+import           Config.Value
+import           Config.Number
 
 -- | Pretty-print a 'Value' as shown in the example.
 -- Sections will nest complex values underneath with
@@ -19,26 +21,38 @@ pretty value =
   case value of
     Sections _ [] -> text "{}"
     Sections _ xs -> prettySections xs
-    Number _ b n  -> prettyNum b n
-    Floating _ c e-> prettyFloating c e
+    Number _ n    -> prettyNumber n
     Text _ t      -> prettyText (Text.unpack t)
     Atom _ t      -> text (Text.unpack (atomName t))
     List _ []     -> text "[]"
     List _ xs     -> vcat [ char '*' <+> pretty x | x <- xs ]
 
-
-prettyNum :: Int -> Integer -> Doc
-prettyNum b n
-  | b == 16   = pref <> text "0x" <> num
-  | b ==  8   = pref <> text "0o" <> num
-  | b ==  2   = pref <> text "0b" <> num
-  | otherwise = integer n
+prettyNumber :: Number -> Doc
+prettyNumber (MkNumber r c) =
+  case r of
+    Radix16 e -> pref <> text "0x" <> num <> expPart 'p' e
+    Radix10 e -> pref <>              num <> expPart 'e' e
+    Radix8    -> pref <> text "0o" <> num
+    Radix2    -> pref <> text "0b" <> num
   where
-  pref = if n < 0 then char '-' else empty
-  num  = text (showIntAtBase (fromIntegral b) intToDigit (abs n) "")
+    radix = radixToInt r
+    pref = if c < 0 then char '-' else empty
+    num  = text (showIntAtBase (fromIntegral radix) intToDigit whole "") -- XXX
+           <> fracPart frac
+    (whole,frac) = properFraction (abs c)
+    expPart _ 0 = text ""
+    expPart c i = text (c : show i)
+    fracPart 0 = text ""
+    fracPart i = text ('.' : showFrac radix frac)
 
-prettyFloating :: Integer -> Integer -> Doc
-prettyFloating c e = text (show c ++ "e" ++ show e)
+showFrac :: Int -> Rational -> String
+showFrac radix 0 = ""
+showFrac radix x = show w ++ rest
+  where
+    (w,f) = properFraction (x * fromIntegral radix)
+    rest
+      | denominator f < denominator x = showFrac radix f
+      | otherwise = ""
 
 prettyText :: String -> Doc
 prettyText = doubleQuotes . cat . snd . mapAccumL ppChar True
@@ -79,6 +93,3 @@ isBig :: Value a -> Bool
 isBig (Sections _ (_:_)) = True
 isBig (List _ (_:_))     = True
 isBig _                  = False
-
-
-

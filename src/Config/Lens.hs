@@ -10,8 +10,8 @@ Lenses and traversals for compatibility with the lens package
 module Config.Lens
   ( key
   , text
-  , number
   , atom
+  , number
   , list
   , values
   , sections
@@ -19,6 +19,7 @@ module Config.Lens
   , valuePlate
   ) where
 
+import Config.Number
 import Config.Value
 import Data.Text
 
@@ -56,11 +57,10 @@ atom :: Applicative f => (Atom -> f Atom) -> Value a -> f (Value a)
 atom f (Atom a t) = Atom a <$> f t
 atom _ v          = pure v
 
--- | Traversal for the 'Integer' contained inside the given
--- 'Value' when it is a 'Number'.
-number :: Applicative f => (Integer -> f Integer) -> Value a -> f (Value a)
-number f (Number a b n) = Number a b <$> f n
-number _ v              = pure v
+-- | Traversal for the 'Number' contained inside the given 'Value'.
+number :: Applicative f => (Number -> f Number) -> Value a -> f (Value a)
+number f (Number a n) = Number a <$> f n
+number _ v            = pure v
 
 -- | Traversal for the ['Value'] contained inside the given
 -- 'Value' when it is a 'List'.
@@ -93,9 +93,8 @@ values = list . traverse
 ann :: Functor f => (a -> f a) -> Value a -> f (Value a)
 ann f v =
   case v of
-    Sections a x   -> (\a' -> Sections a' x  ) <$> f a
-    Number   a x y -> (\a' -> Number   a' x y) <$> f a
-    Floating a x y -> (\a' -> Floating a' x y) <$> f a
-    Text     a x   -> (\a' -> Text     a' x  ) <$> f a
-    Atom     a x   -> (\a' -> Atom     a' x  ) <$> f a
-    List     a x   -> (\a' -> List     a' x  ) <$> f a
+    Sections a x -> (\a' -> Sections a' x) <$> f a
+    Number   a x -> (\a' -> Number   a' x) <$> f a
+    Text     a x -> (\a' -> Text     a' x) <$> f a
+    Atom     a x -> (\a' -> Atom     a' x) <$> f a
+    List     a x -> (\a' -> List     a' x) <$> f a
