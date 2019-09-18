@@ -1,4 +1,6 @@
 {-# Language DeriveDataTypeable #-}
+-- | This module provides a representation of numbers in scientific
+-- notation.
 module Config.Number
   ( Number(..)
   , Radix(..)
@@ -13,6 +15,18 @@ import Data.Ratio (numerator, denominator)
 import Data.Data (Data)
 
 -- | Numbers are represented as base, coefficient, and exponent.
+--
+-- The most convenient way to get numbers into and out of this form
+-- is to use one of: 'numberToRational', 'numberToInteger',
+-- 'rationalToNumber', or 'integerToNumber'.
+--
+-- This representation is explicit about the radix and exponent
+-- used to facilitate better pretty-printing. By using explicit
+-- exponents extremely large numbers can be represented compactly.
+-- Consider that it is easy to write `1e100000000` which would use
+-- a significant amount of memory if realized as an 'Integer'. This
+-- representation allows concerned programs to check bounds before
+-- converting to a representation like 'Integer'.
 data Number = MkNumber
   { numberRadix       :: !Radix
   , numberCoefficient :: !Rational
@@ -22,12 +36,13 @@ data Number = MkNumber
 -- | Radix used for a number. Some radix modes support an
 -- exponent.
 data Radix
-  = Radix2  -- ^ binary, base 2
-  | Radix8  -- ^ octal, base 8
+  = Radix2           -- ^ binary, base 2
+  | Radix8           -- ^ octal, base 8
   | Radix10 !Integer -- ^ decimal, base 10, exponent base 10
   | Radix16 !Integer -- ^ hexdecimal, base 16, exponent base 2
   deriving (Eq, Ord, Read, Show, Data)
 
+-- | Returns the radix as an integer ignoring any exponent.
 radixToInt :: Radix -> Int
 radixToInt r =
   case r of
@@ -55,10 +70,10 @@ numberToInteger n
   where
     r = numberToRational n
 
--- | 'Integer' to a base 10 'Number'
+-- | 'Integer' to a radix 10 'Number' with no exponent
 integerToNumber :: Integer -> Number
 integerToNumber = rationalToNumber . fromInteger
 
--- | 'Rational' to a base 10 'Number'
+-- | 'Rational' to a radix 10 'Number' with no exponent
 rationalToNumber :: Rational -> Number
 rationalToNumber r = (MkNumber (Radix10 0) r)

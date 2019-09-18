@@ -21,7 +21,7 @@ import Config.Number (Number)
 --
 -- Example:
 --
---    * @my-key: my-value@ is @'Section' ('Atom' "my-key") ('Atom' "my-value")@
+--    * @my-key: my-value@ is @'Section' _ ('Atom' _ "my-key") ('Atom' _ "my-value")@
 data Section a = Section
   { sectionAnn   :: a
   , sectionName  :: Text
@@ -45,29 +45,15 @@ instance IsString Atom where
 
 -- | Sum type of the values supported by this language.
 --
--- The first field of the 'Number' constructor is the based used in the concrete
--- syntax of the configuration value. The second is coefficient and third
--- is the power-of-10 exponent used in the concrete syntax. This allows
--- representing numbers that would otherwise overflow a 'Double' or would
--- force a large allocation for an 'Integer'
---
 -- 'Value' is parameterized over an annotation type indented to be used for
--- file position or other application specific information.
---
--- Examples:
---
---    * @0xff@ is @'Number' 16 255 0@
---
---    * @123@  is @'Number' 10 123 0@
---
---    * @123e10@ is @'Number' 123 10@
---    * @123.45@ is @'Number' 12345 (-2)@
+-- file position or other application specific information. When no
+-- annotations are needed, '()' is a fine choice.
 data Value a
   = Sections a [Section a] -- ^ lists of key-value pairs
-  | Number   a Number -- ^ numbers
-  | Text     a Text -- ^ quoted strings
-  | Atom     a Atom -- ^ unquoted strings
-  | List     a [Value a] -- ^ lists
+  | Number   a Number      -- ^ numbers
+  | Text     a Text        -- ^ quoted strings
+  | Atom     a Atom        -- ^ unquoted strings
+  | List     a [Value a]   -- ^ lists
   deriving ( Eq, Read, Show, Typeable, Data
            , Functor, Foldable, Traversable
            , Generic, Generic1
