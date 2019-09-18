@@ -37,6 +37,9 @@ list = List ()
 text :: Text -> Value ()
 text = Text ()
 
+sections :: [(Text, Value ())] -> Value ()
+sections xs = Sections () [Section () k v | (k,v) <- xs]
+
 main :: IO ()
 main = sequenceA_
 
@@ -82,4 +85,20 @@ main = sequenceA_
   , parseTest (text "string") ["\"string\""]
   , parseTest (text "\10string\1\2") ["\"\\x0ast\\&r\\     \\ing\\SOH\\^B\""]
   , parseTest (text "string") ["\"str\\", "     \\ing\""]
+
+  , parseTest (sections []) ["{}"]
+  , parseTest (sections [("x", atom "y")]) ["{x:y}"]
+  , parseTest (sections [("x", atom "y")]) ["x:y"]
+  , parseTest (sections [("x", atom "y"), ("z", atom "w")]) ["{x:y,z:w}"]
+  , parseTest (sections [("x", sections [("y", atom "z")])]) ["x:y:z"]
+  , parseTest (sections [("x", sections [("y", atom "z")])])
+      ["x:"
+      ," y:"
+      ,"  z"]
+  , parseTest (sections [("x", list [atom "y", atom "z"])])
+      ["x: * y"
+      ,"   * z"]
+  , parseTest (list [sections [("x", atom "y")], sections [("z", atom "w")]])
+      ["* x: y"
+      ,"* z: w"]
   ]
