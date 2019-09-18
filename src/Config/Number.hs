@@ -1,4 +1,4 @@
-{-# Language DeriveDataTypeable #-}
+{-# Language DeriveDataTypeable, DeriveGeneric #-}
 {-|
 Module      : Config.Number
 Description : Scientific-notation numbers with explicit radix
@@ -21,6 +21,7 @@ module Config.Number
 
 import Data.Ratio (numerator, denominator)
 import Data.Data (Data)
+import GHC.Generics (Generic)
 
 -- | Numbers are represented as base, coefficient, and exponent.
 --
@@ -39,7 +40,7 @@ data Number = MkNumber
   { numberRadix       :: !Radix
   , numberCoefficient :: !Rational
   }
-  deriving (Eq, Ord, Read, Show, Data)
+  deriving (Eq, Ord, Read, Show, Data, Generic)
 
 -- | Radix used for a number. Some radix modes support an
 -- exponent.
@@ -48,7 +49,7 @@ data Radix
   | Radix8           -- ^ octal, base 8
   | Radix10 !Integer -- ^ decimal, base 10, exponent base 10
   | Radix16 !Integer -- ^ hexdecimal, base 16, exponent base 2
-  deriving (Eq, Ord, Read, Show, Data)
+  deriving (Eq, Ord, Read, Show, Data, Generic)
 
 -- | Returns the radix as an integer ignoring any exponent.
 radixToInt :: Radix -> Int
