@@ -5,6 +5,8 @@ module Config.Number
   , radixToInt
   , numberToRational
   , numberToInteger
+  , integerToNumber
+  , rationalToNumber
   ) where
 
 import Data.Ratio (numerator, denominator)
@@ -52,3 +54,11 @@ numberToInteger n
   | otherwise          = Nothing
   where
     r = numberToRational n
+
+-- | 'Integer' to a base 10 'Number'
+integerToNumber :: Integer -> Number
+integerToNumber = rationalToNumber . fromInteger
+
+-- | 'Rational' to a base 10 'Number'
+rationalToNumber :: Rational -> Number
+rationalToNumber r = (MkNumber (Radix10 0) r)
