@@ -67,12 +67,10 @@ $white+                 ;
 "]"                     { token_ CloseList              }
 "*"                     { token_ Bullet                 }
 
-"-"? 0 [Xx] @hexadecimal ("." @hexadecimal?)? @hexexponent?
-                        { token number }
-"-"? 0 [Oo] @octal      { token number }
-"-"? 0 [Bb] @binary     { token number }
-"-"? @decimal ("." @decimal?)? @exponent?
-                        { token number }
+"-"? 0 [Xx] @hexadecimal ("." @hexadecimal?)? @hexexponent? { token number }
+"-"? 0 [Oo] @octal       ("." @octal      ?)?               { token number }
+"-"? 0 [Bb] @binary      ("." @binary     ?)?               { token number }
+"-"?        @decimal     ("." @decimal    ?)? @exponent?    { token number }
 @atom                   { token Atom                    }
 @atom $white_no_nl* :   { token section                 }
 \"                      { startString                   }
