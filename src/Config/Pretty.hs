@@ -47,7 +47,7 @@ prettyNumber (MkNumber r c) =
 
 showFrac :: Int -> Rational -> String
 showFrac radix 0 = ""
-showFrac radix x = show w ++ rest
+showFrac radix x = intToDigit w : rest
   where
     (w,f) = properFraction (x * fromIntegral radix)
     rest

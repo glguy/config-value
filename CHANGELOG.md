@@ -1,3 +1,8 @@
+0.7.0.1
+---
+
+* Fix pretty-printing of fractional, hexadecimal numbers
+
 0.7.0.0
 ---
 * Updated number representation to preserve fractional part
