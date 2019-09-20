@@ -5,6 +5,8 @@
 This package implements a simple, layout-based value definition language
 used for supplying configuration values to various applications.
 
+Before starting to use config-value, you probably want to read the documentation for [config-schema](https://github.com/glguy/config-schema) to see the user-friendly way to wrap this library.
+
 Live Demo
 --------
 
