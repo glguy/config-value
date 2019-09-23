@@ -25,7 +25,7 @@ $octdigit       = [0-7]
 $hexdigit       = [0-9a-fA-F]
 $bindigit       = [0-1]
 $white_no_nl    = $white # \n
-$charesc        = [abfnrtv\\\"']
+$charesc        = [abfnrtv\\\"'&]
 $cntrl          = [A-Z@\[\\\]\^_]
 $alpha          = [$unilower $uniupper $asciialpha]
 
@@ -47,7 +47,6 @@ $alpha          = [$unilower $uniupper $asciialpha]
                 |   @decimal
                 | o @octal
                 | x @hexadecimal
-                | &
 
 @atom           = $alpha [$alpha $digit $unidigit \. _ \-]*
 
