@@ -71,9 +71,9 @@ import GHC.Generics
 import qualified Data.Map as Map
 
 data MacroError a
-  = UndeclaredVariable a Text -- | Variable used with a defintion
-  | UnknownDirective a Text   -- | Unknown directive
-  | BadInclude a              -- | Incorrect use of @\@include@
+  = UndeclaredVariable a Text -- ^ Variable used with a defintion
+  | UnknownDirective a Text   -- ^ Unknown directive
+  | BadInclude a              -- ^ Incorrect use of @\@include@
   deriving
   ( Eq, Read, Show, Typeable, Data
   , Functor, Foldable, Traversable
