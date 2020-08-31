@@ -3,7 +3,7 @@ module Config.Pretty (pretty) where
 
 import           Data.Char (isPrint, isDigit,intToDigit)
 import           Data.List (mapAccumL)
-import           Data.Ratio (numerator, denominator)
+import           Data.Ratio (denominator)
 import qualified Data.Text as Text
 import           Text.PrettyPrint
 import           Numeric(showIntAtBase)
@@ -37,16 +37,17 @@ prettyNumber (MkNumber r c) =
   where
     radix = radixToInt r
     pref = if c < 0 then char '-' else empty
-    num  = text (showIntAtBase (fromIntegral radix) intToDigit whole "") -- XXX
-           <> fracPart frac
-    (whole,frac) = properFraction (abs c)
+    num  = text (showIntAtBase (fromIntegral radix) intToDigit whole "")
+           <> fracPart
+    (whole,frac) = properFraction (abs c) :: (Integer, Rational)
     expPart _ 0 = text ""
-    expPart c i = text (c : show i)
-    fracPart 0 = text ""
-    fracPart i = text ('.' : showFrac radix frac)
+    expPart p i = text (p : show i)
+    fracPart
+      | 0 == frac = text ""
+      | otherwise = text ('.' : showFrac radix frac)
 
 showFrac :: Int -> Rational -> String
-showFrac radix 0 = ""
+showFrac _ 0 = ""
 showFrac radix x = intToDigit w : rest
   where
     (w,f) = properFraction (x * fromIntegral radix)

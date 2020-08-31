@@ -271,8 +271,6 @@ import           Config.Tokens (Error(..), Position(..), Located(..), layoutPass
 import qualified Config.Tokens as T
 
 import           Control.Exception (Exception(..))
-import           Numeric (showIntAtBase)
-import           Data.Char (intToDigit)
 import           Data.Text (Text)
 import qualified Data.Text as Text
 
@@ -318,11 +316,6 @@ explainToken token =
     T.LayoutSep   -> "parse error: unexpected end of block"
     T.LayoutEnd   -> "parse error: unexpected end of block"
     T.EOF         -> "parse error: unexpected end of file"
-
-showIntAtBase' :: (Show a, Integral a) => String -> a -> (Int -> Char) -> a -> ShowS
-showIntAtBase' pfx base toDigit n
-  | n < 0     = showChar '-' . showString pfx . showIntAtBase base toDigit (negate n)
-  | otherwise =                showString pfx . showIntAtBase base toDigit n
 
 explainError :: Error -> String
 explainError e =

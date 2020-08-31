@@ -27,16 +27,12 @@ module Config.LexerUtils
   , errorAction
   ) where
 
-import           Control.Applicative
-import           Data.Char (GeneralCategory(..), generalCategory, digitToInt,
-                            isAscii, isSpace, ord, isDigit, isHexDigit)
+import           Data.Char (GeneralCategory(..), generalCategory, isAscii, isSpace, ord)
 import           Data.Text (Text)
 import           Data.Word (Word8)
-import           Numeric   (readInt, readHex)
 import qualified Data.Text as Text
 
 import           Config.Tokens
-import           Config.Number
 import qualified Config.NumberParser
 
 ------------------------------------------------------------------------
