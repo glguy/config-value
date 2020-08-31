@@ -48,7 +48,7 @@ $alpha          = [$unilower $uniupper $asciialpha]
                 | o @octal
                 | x @hexadecimal
 
-@atom           = $alpha [$alpha $digit $unidigit \. _ \-]*
+@atom           = [$alpha \$ \@] [$alpha $digit $unidigit \. _ \-]*
 
 @exponent       = [Ee] [\-\+]? @decimal
 @hexexponent    = [Pp] [\-\+]? @decimal

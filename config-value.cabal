@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                config-value
-version:             0.7.0.1
+version:             0.8
 synopsis:            Simple, layout-based value language similar to YAML or JSON
 license:             MIT
 license-file:        LICENSE
@@ -28,6 +28,7 @@ library
     Config
     Config.Lens
     Config.Number
+    Config.Macro
 
   other-modules:
     Config.Lexer
@@ -41,6 +42,7 @@ library
   build-depends:
     base       >= 4.8     && < 4.15,
     array      >= 0.4     && < 0.6,
+    containers >= 0.5     && < 0.7,
     pretty     >= 1.1.1.0 && < 1.2,
     text       >= 1.2.0.4 && < 1.3
 

@@ -1,3 +1,8 @@
+0.8
+---
+* Allow atoms and section names to start with `@` or `$`
+* Add `Config.Macro` module
+
 0.7.0.1
 ---
 

@@ -91,8 +91,8 @@ start on the same column in the file. The value of the pair should be
 indented to the right of the key.
 
 The lexical syntax for section names is identical to the lexical syntax
-of /atoms/. Section names are nonempty sequences starting with an /alpha/
-character followed by zero or more /alpha/, /digit/, /period/ (.),
+of /atoms/. Section names are nonempty sequences starting with an /alpha/,
+@$@ or @\@@ character followed by zero or more /alpha/, /digit/, /period/ (.),
 underscore (_), or dash (-).
 
 Section lists can be nested.
@@ -205,8 +205,9 @@ unquoted-string
 /Atoms/ are unquoted strings that are distinct from normal /text/ values.
 This type is intended to represent enumerations in a configuration file.
 
-Atoms are nonempty sequences starting with an /alpha/ character followed by
-zero or more /alpha/, /digit/, /period/ (.), underscore (_), or dash (-).
+Atoms are nonempty sequences starting with an /alpha/, @$@, or @\@@ character
+followed by zero or more /alpha/, /digit/, /period/ (.), underscore (_), or
+dash (-).
 
 Lexical syntax: @$alpha [$alpha $digit $unidigit \\. _ \\-]*@
 
