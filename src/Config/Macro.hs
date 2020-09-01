@@ -81,6 +81,7 @@ import Data.Map (Map)
 import Data.Typeable (Typeable)
 import qualified Data.Map as Map
 
+-- | Errors from macro expansion.
 data MacroError a
   = UndeclaredVariable a Text -- ^ Variable used with a defintion
   | UnknownDirective a Text   -- ^ Unknown directive
