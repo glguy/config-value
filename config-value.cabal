@@ -15,7 +15,7 @@ description:         This package implements a language similar to YAML or JSON 
                      with fewer special cases and fewer dependencies. It emphasizes
                      layout structure for sections and lists, and requires quotes
                      around strings.
-tested-with:         GHC==8.0.2, GHC==8.2.2, GHC==8.4.4, GHC==8.6.5, GHC==8.8.1
+tested-with:         GHC==8.0.2, GHC==8.2.2, GHC==8.4.4, GHC==8.6.5, GHC==8.8.4, GHC==8.10.2
 
 extra-source-files:
   README.md
