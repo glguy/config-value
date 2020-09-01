@@ -107,13 +107,13 @@ processAtom a txt =
 --
 -- @\@load@ not supported and results in a 'BadLoad' error.
 expandMacros :: Value a -> Either (MacroError a) (Value a)
-expandMacros = expandMacros' Left (\a _ -> Left (BadLoad a)) Map.empty
+expandMacros = expandMacros' Left (Left . BadLoad . valueAnn) Map.empty
 
 -- | Expand macros in a configuration value using a pre-populated environment.
 expandMacros' ::
   Monad m =>
   (forall b. MacroError a -> m b) {- ^ failure                       -} ->
-  (a -> Text -> m (Value a))      {- ^ @\@load@ implementation       -} ->
+  (Value a -> m (Value a))        {- ^ @\@load@ implementation       -} ->
   Map Text (Value a)              {- ^ variable environment          -} ->
   Value a                         {- ^ value to expand               -} ->
   m (Value a)                     {- ^ expanded value                -}
@@ -123,44 +123,36 @@ expandMacros' failure load = go
 
     go env v =
       case v of
-        Number   a x -> pure (Number a x)
-        Text     a x -> pure (Text a x)
-        List     a x -> fmap (List a) (traverse (go env) x)
+        Number a x -> pure (Number a x)
+        Text a x -> pure (Text a x)
+        List a x -> List a <$> traverse (go env) x
 
-        Sections _ [Section a "@load" arg] ->
-          do arg' <- go env arg
-             case arg' of
-               Text _ path -> load a path
-               _           -> failure (BadLoad a)
+        Sections _ [Section _ "@load" arg] -> load =<< go env arg
+        Sections a x -> Sections a <$> elaborateSections env x
 
-        Sections a x -> fmap (Sections a) (elaborateSections env x)
-
-        Atom     a x ->
+        Atom a x ->
           do x' <- proc a (atomName x)
              case x' of
-               Plain  -> pure (Atom a x)
+               Plain -> pure (Atom a x)
                Splice -> failure (BadSplice a)
-               Load   -> failure (BadLoad a)
+               Load -> failure (BadLoad a)
                Variable var ->
                  case Map.lookup var env of
                    Nothing -> failure (UndeclaredVariable a var)
-                   Just y  -> pure y
+                   Just y -> pure y
 
     elaborateSections _ [] = pure []
     elaborateSections env (Section a k v : xs) =
       do special <- proc a k
          v' <- go env v
          case special of
-           Plain ->
-             do xs' <- elaborateSections env xs
-                pure (Section a k v' : xs')
-           Variable var ->
-             elaborateSections (Map.insert var v' env) xs
            Load -> failure (BadLoad a)
+           Variable var -> elaborateSections (Map.insert var v' env) xs
+           Plain -> (Section a k v' :) <$> elaborateSections env xs
            Splice ->
              case v' of
-               Sections _ ys -> elaborateSections env (ys ++ xs)
-               _             -> failure (BadSplice a)
+               Sections _ ys -> (ys++) <$> elaborateSections env xs
+               _ -> failure (BadSplice a)
 
 -- | A pair of filepath and position
 data FilePosition = FilePosition FilePath Position
@@ -179,6 +171,9 @@ instance Exception LoadFileError
 -- @\@load@ will compute included file path from the given function given the
 -- load argument and current configuration file path.
 --
+-- Valid @\@load@ arguments are string literals use as arguments to
+-- the path resolution function.
+--
 -- Throws `IOError` from file loads and `LoadFileError`
 loadFileWithMacros ::
   (Text -> FilePath -> FilePath) {- ^ inclusion path resolution -} ->
@@ -191,5 +186,9 @@ loadFileWithMacros toPath = go
          v1 <- case parse txt of
                  Left e -> throwIO (LoadFileParseError path e)
                  Right v -> pure v
-         let v2 = fmap (FilePosition path) v1
-         expandMacros' (throwIO . LoadFileMacroError) (\_ str -> go (toPath str path)) Map.empty v2
+         let v2 = FilePosition path <$> v1
+         let loadImpl pathVal =
+               case pathVal of
+                 Text _ str -> go (toPath str path)
+                 _ -> throwIO (LoadFileMacroError (BadLoad (valueAnn pathVal)))
+         expandMacros' (throwIO . LoadFileMacroError) loadImpl Map.empty v2
