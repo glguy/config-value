@@ -126,8 +126,12 @@ expandMacros' failure load = go
         Number   a x -> pure (Number a x)
         Text     a x -> pure (Text a x)
         List     a x -> fmap (List a) (traverse (go env) x)
-        Sections a [Section _ "@load" (Text _ txt)] -> load a txt
-        Sections a x -> fmap (Sections a) (elaborateSections env x)
+        Sections _ [Section a "@load" arg] ->
+          do arg' <- go env arg
+             case arg' of
+               Text _ path -> load a path
+               _           -> failure (BadLoad a)
+        Sections a ss -> fmap (Sections a) (elaborateSections env x)
         Atom     a x ->
           do x' <- proc a (atomName x)
              case x' of
