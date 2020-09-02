@@ -6,13 +6,18 @@ Copyright   : (c) Eric Mertens, 2020
 License     : ISC
 Maintainer  : emertens@gmail.com
 
-This module provides a processing pass for configuration files to assign
-local variables used to reduce duplication.
+This module provides assigns meaning to atoms and section names that start with @\@@
+and @$@. It provides processing pass for configuration to use local variables and
+inclusion to better structure configuration.
 
 = Sigils
 
 * @$@ starts a variable.
 * @\@@ starts a directive.
+
+Merge key-value mappings using @\@splice@.
+
+Load external configuration with @\@load@.
 
 = Variables
 
@@ -36,7 +41,48 @@ field1: 42
 field2: [0, 42]
 @
 
-Later variable definitions will shadow previous definitions.
+Later variable definitions will shadow earlier definitions.
+
+@
+{ $x: 1, $x: 2, k: $x }
+@
+
+expands to
+
+@
+{ k: 2 }
+@
+
+Scoping examples:
+
+@
+top1:
+  a:  $x                     -- BAD: $x not defined yet
+  $x: 42                     -- $x is now defined to be 42
+  b:  $x                     -- OK: $x was defined above
+  c:  {sub1: $x, sub2: [$x]} -- OK: $x in scope in subsections
+                             -- note: $x now goes out of scope
+top2: $x                     -- BAD: $x no longer in scope
+@
+
+Macros are expanded at there definition site. All variables are resolved before
+adding the new variable into the environment. Variables are lexically scoped
+rather than dynamically scoped.
+
+Allowed:
+
+@
+$x: 1
+$y: $x -- OK, y is now 1
+@
+
+Not allowed:
+
+@
+$y: $x -- BAD: $x was not in scope
+$x: 1
+z:  $y
+@
 
 = Sections splicing
 
@@ -57,6 +103,25 @@ example:
   x: 0
   y: 1
   z: 2
+@
+
+= File loading
+
+The @\@load@ directive is intended including configuration from other sources.
+'loadFileWithMacros' provides an interpretation of this directive that loads
+other files. An arbitrary interpretation can be defined with 'expandMacros''
+
+To load a value define a key-value mapping with a single @\@load@ key with a
+value specifying the location to load from.
+
+@
+x: @load: "fourty-two.cfg"
+@
+
+could expand to
+
+@
+x: 42
 @
 
 -}
