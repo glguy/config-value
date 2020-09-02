@@ -242,10 +242,10 @@ instance Exception LoadFileError
 --
 -- Throws `IOError` from file loads and `LoadFileError`
 loadFileWithMacros ::
-  (Text -> FilePath -> FilePath) {- ^ inclusion path resolution -} ->
-  FilePath                       {- ^ starting file path -} ->
-  IO (Value FilePosition)        {- ^ macro-expanded config value -}
-loadFileWithMacros toPath = go
+  (Text -> FilePath -> IO FilePath) {- ^ inclusion path resolution -} ->
+  FilePath                          {- ^ starting file path -} ->
+  IO (Value FilePosition)           {- ^ macro-expanded config value -}
+loadFileWithMacros findPath = go
   where
     go path =
       do txt <- Text.readFile path
@@ -255,6 +255,6 @@ loadFileWithMacros toPath = go
          let v2 = FilePosition path <$> v1
          let loadImpl pathVal =
                case pathVal of
-                 Text _ str -> go (toPath str path)
+                 Text _ str -> go =<< findPath str path
                  _ -> throwIO (LoadFileMacroError (BadLoad (valueAnn pathVal)))
          expandMacros' (throwIO . LoadFileMacroError) loadImpl Map.empty v2
