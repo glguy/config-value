@@ -17,11 +17,15 @@ syn match   cvNumber            "-\=\([0-9]\+\|0[xX][0-9a-fA-F]\+\|0[oO][0-7]\+\
 syn match   cvFloat             "-\=[0-9]\+\.[0-9]\+\([eE][-+]\=[0-9]\+\)\=\>"
 syn match   cvFloat             "-\=[0-9]\+[eE][-+]\=[0-9]\+\>"
 
+syn match   cvVariable          "$[a-zA-Z0-9\._\-]*\>"
+syn match   cvDirective         "@[a-zA-Z0-9\._\-]*\>"
 syn match   cvAtom              "\<[a-zA-Z][a-zA-Z0-9\._\-]*\>"
 
 syn match   cvLineComment      "--.*$"
 syn region  cvBlockComment     start="{-" end="-}" contains=cvString,cvBlockComment
 
+hi def link cvVariable                    Macro
+hi def link cvDirective                   Include
 hi def link cvAtom                        Identifier
 hi def link cvDelimiter                   Delimiter
 
