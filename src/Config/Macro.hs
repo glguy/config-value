@@ -146,9 +146,10 @@ import Data.Map (Map)
 import Data.Typeable (Typeable)
 import qualified Data.Map as Map
 
--- | Errors from macro expansion.
+-- | Errors from macro expansion annotated with the 'valueAnn' from
+-- the 'Value' nearest to the problem (typically a file position).
 data MacroError a
-  = UndeclaredVariable a Text -- ^ Variable used with a defintion
+  = UndeclaredVariable a Text -- ^ Variable used before its defintion
   | UnknownDirective a Text   -- ^ Unknown directive
   | BadSplice a               -- ^ Incorrect use of @\@splice@
   | BadLoad a                 -- ^ Incorrect use of @\@load@
