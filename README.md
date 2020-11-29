@@ -1,6 +1,6 @@
 # config-value
 
-[![Hackage](https://img.shields.io/hackage/v/config-value.svg)](https://hackage.haskell.org/package/config-value) [![Build Status](https://secure.travis-ci.org/glguy/config-value.svg)](http://travis-ci.org/glguy/config-value)
+[![Hackage](https://img.shields.io/hackage/v/config-value.svg)](https://hackage.haskell.org/package/config-value) [![Build Status](https://api.travis-ci.com/glguy/config-value.svg)](http://travis-ci.org/glguy/config-value)
 
 This package implements a simple, layout-based value definition language
 used for supplying configuration values to various applications.
@@ -21,6 +21,8 @@ layout:
     configuration:
       {} -- empty section
 
+    inline-maps: {key1: value1, key2: value2}
+
     sections:
      "glguy"
 
@@ -30,13 +32,15 @@ layout:
        so you can comment out otherwise valid
        portions of your config
     -}
-    atoms      : yes
+    atoms:       yes
 
-    decimal    : -1234
+    decimal:     -1234
     hexadecimal: 0x1234
-    octal      : 0o1234
-    binary     : 0b1010
-    floating   : 12.34e56
+    octal:       0o1234
+    binary:      0b1010
+
+    floats:      [1e2, 0x3p-5, 24.48]
+    underscores: 1_000_000
 
 lists:
    * sections: in-lists
@@ -47,7 +51,10 @@ lists:
      * "lists"
    * 3
 
-unicode : "standard Haskell format strings (1 ≤ 2)\x2228(2 ≤ 3)"
+unicode: "standard Haskell format strings (1 ≤ 2)x2228(2 ≤ 3)"
+
+multiline: "haskell style\
+           \string gaps"
 ```
 
 Format
