@@ -1,3 +1,13 @@
+0.8.1
+---
+* Allow underscores in number literals
+  Copied from <https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0076-numeric-underscores.rst#new-syntax-this-proposal>
+
+  Underscores are allowed and ignored
+  - in the *middle* of integer-parts of the literal syntax
+  - between base-markers (0x, 0o, 0b) and number part
+  - before the `eEpP` part of an exponent
+
 0.8
 ---
 * Allow atoms and section names to start with `@` or `$`

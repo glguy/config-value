@@ -21,19 +21,20 @@ $uniother       = \x6
 
 $asciialpha     = [A-Z a-z]
 $digit          = [0-9]
-$octdigit       = [0-7]
-$hexdigit       = [0-9a-fA-F]
-$bindigit       = [0-1]
+$octit          = [0-7]
+$hexit          = [0-9a-fA-F]
+$binit          = [0-1]
 $white_no_nl    = $white # \n
 $charesc        = [abfnrtv\\\"'&]
 $cntrl          = [A-Z@\[\\\]\^_]
 $alpha          = [$unilower $uniupper $asciialpha]
 
+@spacer         = _*
 
-@decimal        = $digit+
-@octal          = $octdigit+
-@binary         = $bindigit+
-@hexadecimal    = $hexdigit+
+@decimal        = $digit (@spacer $digit)*
+@octal          = $octit (@spacer $octit)*
+@binary         = $binit (@spacer $binit)*
+@hexadecimal    = $hexit (@spacer $hexit)*
 
 -- Copied from Haskell 2010
 @ascii          = \^ $cntrl
@@ -44,14 +45,14 @@ $alpha          = [$unilower $uniupper $asciialpha]
                 | SP  | DEL
 @escape         =   $charesc
                 |   @ascii
-                |   @decimal
-                | o @octal
-                | x @hexadecimal
+                |   $digit+
+                | o $octit+
+                | x $hexit+
 
 @atom           = [$alpha \$ \@] [$alpha $digit $unidigit \. _ \-]*
 
-@exponent       = [Ee] [\-\+]? @decimal
-@hexexponent    = [Pp] [\-\+]? @decimal
+@exponent       = @spacer [Ee] [\-\+]? @decimal
+@hexexponent    = @spacer [Pp] [\-\+]? @decimal
 
 config :-
 
@@ -66,10 +67,10 @@ $white+                 ;
 "]"                     { token_ CloseList              }
 "*"                     { token_ Bullet                 }
 
-"-"? 0 [Xx] @hexadecimal ("." @hexadecimal?)? @hexexponent? { token number }
-"-"? 0 [Oo] @octal       ("." @octal      ?)?               { token number }
-"-"? 0 [Bb] @binary      ("." @binary     ?)?               { token number }
-"-"?        @decimal     ("." @decimal    ?)? @exponent?    { token number }
+"-"? 0 [Xx] @spacer @hexadecimal ("." @hexadecimal?)? @hexexponent? { token number }
+"-"? 0 [Oo] @spacer @octal       ("." @octal      ?)?               { token number }
+"-"? 0 [Bb] @spacer @binary      ("." @binary     ?)?               { token number }
+"-"?                @decimal     ("." @decimal    ?)? @exponent?    { token number }
 @atom                   { token Atom                    }
 @atom $white_no_nl* :   { token section                 }
 \"                      { startString                   }

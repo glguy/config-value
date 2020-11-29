@@ -21,7 +21,7 @@ import Config.Number (Number)
 --
 -- Example:
 --
---    * @my-key: my-value@ is @'Section' _ ('Atom' _ "my-key") ('Atom' _ "my-value")@
+--    * @my-key: my-value@ is @'Section' _ "my-key" ('Atom' _ "my-value")@
 data Section a = Section
   { sectionAnn   :: a
   , sectionName  :: Text

@@ -148,7 +148,8 @@ untermString _ _ = \(InString posn _) ->
 number ::
   Text {- ^ sign-prefix-digits -} ->
   Token
-number = Number . Config.NumberParser.number . Text.unpack . Text.toUpper
+number = Number . Config.NumberParser.number
+       . Text.unpack . Text.toUpper . Text.filter ('_' /=)
 
 -- | Process a section heading token
 section :: Text -> Token
