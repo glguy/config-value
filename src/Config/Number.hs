@@ -61,17 +61,17 @@ radixToInt r =
     Radix16{} -> 16
 
 -- | Convert a number to a 'Rational'. Warning: This can use a
--- lot of member in the case of very large exponent parts.
+-- lot of memory in the case of very large exponent parts.
 numberToRational :: Number -> Rational
 numberToRational (MkNumber r c) =
   case r of
     Radix2    -> c
     Radix8    -> c
     Radix10 e -> c * 10 ^^ e
-    Radix16 e -> c * 2  ^^ e
+    Radix16 e -> c *  2 ^^ e
 
 -- | Convert a number to a 'Integer'. Warning: This can use a
--- lot of member in the case of very large exponent parts.
+-- lot of memory in the case of very large exponent parts.
 numberToInteger :: Number -> Maybe Integer
 numberToInteger n
   | denominator r == 1 = Just $! numerator r
