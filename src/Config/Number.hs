@@ -85,4 +85,4 @@ integerToNumber = rationalToNumber . fromInteger
 
 -- | 'Rational' to a radix 10 'Number' with no exponent
 rationalToNumber :: Rational -> Number
-rationalToNumber r = (MkNumber (Radix10 0) r)
+rationalToNumber = MkNumber (Radix10 0)
