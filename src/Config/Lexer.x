@@ -65,7 +65,9 @@ $white+                 ;
 "["                     { token_ OpenList               }
 ","                     { token_ Comma                  }
 "]"                     { token_ CloseList              }
-"*"                     { token_ Bullet                 }
+"*"                     { token Bullet                  }
+"-"                     { token Bullet                  }
+"+"                     { token Bullet                  }
 
 "-"? 0 [Xx] @spacer @hexadecimal ("." @hexadecimal?)? @hexexponent? { token number }
 "-"? 0 [Oo] @spacer @octal       ("." @octal      ?)?               { token number }
