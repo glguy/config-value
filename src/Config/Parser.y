@@ -74,9 +74,9 @@ inlinesections1 ::              { [Section Position]            }
 section ::                      { Section Position              }
   : SECTION value               { section $1 $2                 }
 
-list(sep) ::                    { [Value Position]              }
-  :              value          { [$1]                          }
-  | list(sep) SEP sep value     { $4 : $1                       }
+list(blt) ::                    { [Value Position]              }
+  :                   value     { [$1]                          }
+  | list(blt) SEP blt value     { $4 : $1                       }
 
 inlinelist ::                   { [Value Position]              }
   :                             { []                            }
