@@ -1,3 +1,11 @@
+0.8.2
+---
+* Add `+` and `-` to the set of layout-based list syntax bullets.
+  All elements of the list are checked to see that a consistent
+  bullet is used. Different bullets might be used to help make
+  nested lists more understandable. `-` might be used to make things
+  look more like YAML
+
 0.8.1
 ---
 * Allow underscores in number literals

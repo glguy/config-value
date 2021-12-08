@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                config-value
-version:             0.8.1
+version:             0.8.2
 synopsis:            Simple, layout-based value language similar to YAML or JSON
 license:             MIT
 license-file:        LICENSE
