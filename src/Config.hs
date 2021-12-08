@@ -128,9 +128,11 @@ list element may be terminated with a trailing comma.
 
 Example: @[1, 2, 3]@
 
-Layout list entries are started with a leading @*@. Each leading @*@ must occur
-in the some column of the file. Lists can be nested by starting the new list
-on a column to the right of the current list.
+Layout list entries are started with a leading @*@, @+@, or @-@. Each leading bullet
+must occur in the some column of the file. Lists can be nested by starting the new
+list on a column to the right of the current list. A single list must use the same
+bullet token for every element of the list. Nested lists can choose a different
+bullet. This can help visually distinguish nested lists.
 
 Layout based lists can not occur inside inline list syntax. Layout based section lists
 can occur inside layout based lists
