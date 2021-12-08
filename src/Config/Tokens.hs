@@ -36,7 +36,7 @@ data Token
   = Section Text
   | String Text
   | Atom Text
-  | Bullet
+  | Bullet Text
   | Comma
   | Number Number
   | OpenList
@@ -99,5 +99,5 @@ toCol = posColumn . locPosition
 usesLayout :: Located Token -> Bool
 usesLayout t
   | Section{} <- locThing t = True
-  | Bullet    <- locThing t = True
+  | Bullet{}  <- locThing t = True
   | otherwise               = False

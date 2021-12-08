@@ -1,5 +1,5 @@
 {
-{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE Trustworthy, OverloadedStrings #-}
 
 module Config.Parser (parseValue) where
 
@@ -15,11 +15,13 @@ SECTION                         { Located _ T.Section{}         }
 STRING                          { Located _ T.String{}          }
 ATOM                            { Located _ T.Atom{}            }
 NUMBER                          { Located _ T.Number{}          }
-'*'                             { Located $$ T.Bullet            }
-'['                             { Located $$ T.OpenList          }
+'*'                             { Located $$ (T.Bullet "*")     }
+'+'                             { Located $$ (T.Bullet "+")     }
+'-'                             { Located $$ (T.Bullet "-")     }
+'['                             { Located $$ T.OpenList         }
 ','                             { Located _ T.Comma             }
 ']'                             { Located _ T.CloseList         }
-'{'                             { Located $$ T.OpenMap           }
+'{'                             { Located $$ T.OpenMap          }
 '}'                             { Located _ T.CloseMap          }
 SEP                             { Located _ T.LayoutSep         }
 END                             { Located _ T.LayoutEnd         }
@@ -37,7 +39,9 @@ config ::                       { Value Position                }
 
 value ::                        { Value Position                }
   : sections END                { sections $1                   }
-  | '*' list END                { List $1 (reverse $2)          }
+  | '*' list('*') END           { List $1 (reverse $2)          }
+  | '-' list('-') END           { List $1 (reverse $2)          }
+  | '+' list('+') END           { List $1 (reverse $2)          }
   | simple                      { $1                            }
 
 simple ::                       { Value Position                }
@@ -70,9 +74,9 @@ inlinesections1 ::              { [Section Position]            }
 section ::                      { Section Position              }
   : SECTION value               { section $1 $2                 }
 
-list ::                         { [Value Position]              }
+list(sep) ::                    { [Value Position]              }
   :              value          { [$1]                          }
-  | list SEP '*' value          { $4 : $1                       }
+  | list(sep) SEP sep value     { $4 : $1                       }
 
 inlinelist ::                   { [Value Position]              }
   :                             { []                            }
