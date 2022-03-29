@@ -56,7 +56,7 @@ showFrac radix x = intToDigit w : rest
       | otherwise = ""
 
 prettyText :: String -> Doc
-prettyText = doubleQuotes . cat . snd . mapAccumL ppChar True
+prettyText = doubleQuotes . hcat . snd . mapAccumL ppChar True
 
   where ppChar s x
           | isDigit x = (True, if not s then text "\\&" <> char x else char x)
