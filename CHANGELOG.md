@@ -1,3 +1,7 @@
+0.8.2.1
+---
+* Fix pretty-printing bug with long string literals
+
 0.8.2
 ---
 * Add `+` and `-` to the set of layout-based list syntax bullets.
