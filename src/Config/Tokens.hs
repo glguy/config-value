@@ -1,3 +1,4 @@
+{-# Language Safe #-}
 -- | This module provides the token type used in the lexer and
 -- parser and provides the extra pass to insert layout tokens.
 module Config.Tokens
@@ -10,7 +11,7 @@ module Config.Tokens
   ) where
 
 import Data.Text (Text)
-import Config.Number
+import Config.Number (Number)
 
 -- | A position in a text file
 data Position = Position

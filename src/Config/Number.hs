@@ -1,4 +1,4 @@
-{-# Language DeriveDataTypeable, DeriveGeneric #-}
+{-# Language DeriveDataTypeable, DeriveGeneric, Safe #-}
 {-|
 Module      : Config.Number
 Description : Scientific-notation numbers with explicit radix

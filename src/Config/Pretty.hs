@@ -1,5 +1,6 @@
+{-# Language Safe #-}
 -- | Pretty-printing implementation for 'Value'
-module Config.Pretty (pretty) where
+module Config.Pretty (pretty, prettyInline) where
 
 import           Data.Char (isPrint, isDigit,intToDigit)
 import           Data.List (mapAccumL)
@@ -94,3 +95,15 @@ isBig :: Value a -> Bool
 isBig (Sections _ (_:_)) = True
 isBig (List _ (_:_))     = True
 isBig _                  = False
+
+-- | Pretty-printer that uses no layout for sections or lists.
+prettyInline :: Value a -> Doc
+prettyInline value =
+  case value of
+    Number _ n    -> prettyNumber n
+    Text _ t      -> prettyText (Text.unpack t)
+    Atom _ t      -> text (Text.unpack (atomName t))
+    List _ xs     -> brackets (list (map prettyInline xs))
+    Sections _ xs -> braces (list [text (Text.unpack k) <> colon <> prettyInline v | Section _ k v <- xs])
+  where
+    list = hcat . punctuate comma

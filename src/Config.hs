@@ -246,6 +246,7 @@ module Config
 
   -- * Pretty-printing
   , pretty
+  , prettyInline
 
   -- * Types
   , Section(..)
@@ -267,7 +268,7 @@ module Config
 import           Config.Number (Number, numberToInteger, numberToRational, integerToNumber, rationalToNumber)
 import           Config.Value  (Atom(..), Value(..), Section(..), valueAnn)
 import           Config.Parser (parseValue)
-import           Config.Pretty (pretty)
+import           Config.Pretty (pretty, prettyInline)
 import           Config.Lexer  (scanTokens)
 import           Config.Tokens (Error(..), Position(..), Located(..), layoutPass, Token)
 import qualified Config.Tokens as T

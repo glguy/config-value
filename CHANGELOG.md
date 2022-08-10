@@ -1,3 +1,7 @@
+0.8.3
+---
+* Add `prettyInline` for layout-free pretty-printing
+
 0.8.2.1
 ---
 * Fix pretty-printing bug with long string literals

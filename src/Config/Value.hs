@@ -1,4 +1,4 @@
-{-# Language DeriveGeneric, DeriveTraversable, DeriveDataTypeable #-}
+{-# Language DeriveGeneric, DeriveTraversable, DeriveDataTypeable, Safe #-}
 
 -- | This module provides the types used in this package for configuration.
 -- Visit "Config.Parser" to parse values of this type in a convenient
