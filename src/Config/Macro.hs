@@ -65,7 +65,7 @@ top1:
 top2: $x                     -- BAD: $x no longer in scope
 @
 
-Macros are expanded at there definition site. All variables are resolved before
+Macros are expanded at their definition site. All variables are resolved before
 adding the new variable into the environment. Variables are lexically scoped
 rather than dynamically scoped.
 
@@ -86,7 +86,7 @@ z:  $y
 
 = Sections splicing
 
-One sections value can be spliced into another sections value using the @\@spilce@
+One sections value can be spliced into another sections value using the @\@splice@
 directive. It is an error to splice a value that is not a key-value sections.
 
 @
