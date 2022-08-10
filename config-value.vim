@@ -39,3 +39,7 @@ hi def link cvLineComment                 cvComment
 hi def link cvComment                     Comment
 
 let b:current_syntax = "config-value"
+
+setlocal commentstring=--%s
+setlocal comments=:--
+let b:undo_ftplugin = "setl com< commentstring<"
