@@ -1,6 +1,6 @@
 # config-value
 
-[![Hackage](https://img.shields.io/hackage/v/config-value.svg)](https://hackage.haskell.org/package/config-value) [![Build Status](https://api.travis-ci.com/glguy/config-value.svg)](http://travis-ci.com/glguy/config-value)
+[![Hackage](https://img.shields.io/hackage/v/config-value.svg)](https://hackage.haskell.org/package/config-value)
 
 This package implements a simple, layout-based value definition language
 used for supplying configuration values to various applications.
