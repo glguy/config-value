@@ -40,6 +40,7 @@ import Config.Number
 
 number ::                               { Number        }
   : '-' unsigned_number                 { negNum $2     }
+  | '+' unsigned_number                 {        $2     }
   |     unsigned_number                 {        $1     }
 
 unsigned_number
