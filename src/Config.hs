@@ -175,27 +175,27 @@ For a detailed description of Haskell string literal syntax, see
 
 Numbers can be written with integer and floating-point literals.
 
-Prefix numbers with @-@ to construct a negative number.
+Numbers can optionally be prefixed with a sign: @+@ or @-@.
 
-Integer literals support alternate base described below.
-
-Floating-point literals can specify a power-of-10 exponent.
+Digits can be separated using @_@.
 
 Bases
 
-   * No prefix for decimal (base 10) integer literals
+   * No prefix for decimal (base 10) integer literals. Base 10 exponents
+     are specified with @e@.
 
    * Prefix binary (base 2) integer literals with @0b@ or @0B@
 
    * Prefix octal (base 8) integer literals with @0o@ or @0O@
 
    * Prefix hexadecimal (base 16) integer literals with @0x@ or @0X@. Upper
-     and lower-cased hex digits are supported.
+     and lower-cased hex digits are supported. Base 2 exponents are
+     specified with @p@.
 
 List of examples:
 
 @
-[ 0, 42, -42, 123.45, 6E7, 1e+10, 3.4e-5, 0xfF, 0b101010, -0o77 ]
+[ 0, 42, -42, +123.45, 6E7, 1e+10, 3.4e-5, 0xfF, 0b1010_1000, -0o77, 0xap10 ]
 @
 
 == Atom
