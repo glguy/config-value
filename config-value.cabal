@@ -47,7 +47,7 @@ library
     text       >= 1.2.0.4 && < 2.1,
 
   build-tool-depends:
-    alex:alex   ^>= 3.2.4,
+    alex:alex   ^>= 3.3.0,
     happy:happy >= 1.19 && <1.21,
 
   hs-source-dirs:      src
