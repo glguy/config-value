@@ -1,4 +1,4 @@
-cabal-version:       2.2
+cabal-version:       3.0
 name:                config-value
 version:             0.8.3
 synopsis:            Simple, layout-based value language similar to YAML or JSON
@@ -15,7 +15,7 @@ description:         This package implements a language similar to YAML or JSON 
                      with fewer special cases and fewer dependencies. It emphasizes
                      layout structure for sections and lists, and requires quotes
                      around strings.
-tested-with:         GHC==8.0.2, GHC==8.2.2, GHC==8.4.4, GHC==8.6.5, GHC==8.8.4, GHC==8.10.2, GHC==9.0.1
+tested-with:        GHC == {8.10.7, 9.0.2, 9.2.8, 9.4.8, 9.6.5, 9.8.2, 9.10.1}
 
 extra-doc-files:
   README.md
@@ -40,7 +40,7 @@ library
     Config.Value
 
   build-depends:
-    base       >= 4.8     && < 4.20,
+    base       >= 4.8     && < 4.21,
     array      >= 0.4     && < 0.6,
     containers >= 0.5     && < 0.8,
     pretty     >= 1.1.1.0 && < 1.2,
