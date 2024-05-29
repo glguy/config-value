@@ -2,7 +2,7 @@ cabal-version:       2.2
 name:                config-value
 version:             0.8.3
 synopsis:            Simple, layout-based value language similar to YAML or JSON
-license:             MIT
+license:             ISC
 license-file:        LICENSE
 author:              Eric Mertens
 maintainer:          emertens@gmail.com
