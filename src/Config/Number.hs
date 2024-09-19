@@ -42,8 +42,7 @@ data Number = MkNumber
   }
   deriving (Eq, Ord, Read, Show, Data, Generic)
 
--- | Radix used for a number. Some radix modes support an
--- exponent.
+-- | Radix used for a number. Some radix modes support an exponent.
 data Radix
   = Radix2           -- ^ binary, base 2
   | Radix8           -- ^ octal, base 8
